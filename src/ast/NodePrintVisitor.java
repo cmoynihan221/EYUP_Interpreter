@@ -3,13 +3,16 @@ package ast;
 import ast.Expr.Assignment;
 import ast.Expr.Binary;
 import ast.Expr.Group;
+import ast.Expr.Logical;
 import ast.Expr.Primary;
 import ast.Expr.Unary;
 import ast.Expr.Var;
 import ast.Stmt.DefVar;
 import ast.Stmt.Expression;
 import ast.Stmt.ForgetVar;
+import ast.Stmt.If;
 import ast.Stmt.Print;
+import ast.Stmt.When;
 
 public class NodePrintVisitor implements NodeVisitor{
 	
@@ -79,6 +82,21 @@ public class NodePrintVisitor implements NodeVisitor{
 	}
 	@Override
 	public Object visitForgetVar(ForgetVar forgetVar) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public Object visitIf(If if1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public Object visitLogicExpr(Logical logical) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public Object visitWhen(When when) {
 		// TODO Auto-generated method stub
 		return null;
 	}

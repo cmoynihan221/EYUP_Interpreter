@@ -3,6 +3,7 @@ package parser;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import enums.Tokens;
 import lexer.Lexer;
@@ -40,7 +41,7 @@ public class Parser {
 			if(match(token)) return varDef();
 			return statement();
 		} catch(ParseError error) {
-			throw error("assingment error");
+			throw error("assignment error");
 		}
 	}
 	//Declaring a variable in EYUP
@@ -81,6 +82,12 @@ public class Parser {
 		if(match(new Tokens[]{Tokens.FORGET})) {
 			return forgetStmt();
 		}
+		if(match(new Tokens[]{Tokens.IF})) {
+			return ifStatement();
+		}
+		if(match(new Tokens[]{Tokens.WHEN})) {
+			return whenStatement();
+		}
 		return exprStmt();
 		
 	}
@@ -101,13 +108,42 @@ public class Parser {
 		Tokens[] token = {Tokens.L_PAREN};
 		if (match(token)) {
 			Expr literal = expression();
-			takeToken(Tokens.R_PAREN,"print Expect ')'.");
+			takeToken(Tokens.R_PAREN,"Ey up! Was expecting ')'");
 			return new Stmt.Print(literal);
 		}
 		else {
 			throw error("Print");
 		}
-		
+	}
+	
+	private Stmt ifStatement() {
+		Expr condition = expression();
+		takeToken(Tokens.THEN,"Ey up! Was expecting 'then'");
+		Stmt branch1 = statement();
+		Stmt branch2 = null;
+		if(match(new Tokens[]{Tokens.ELSE})) {
+			branch2 = statement();
+		}
+		takeToken(Tokens.OVER,"Ey up! Was expecting 'oer'");
+		return new Stmt.If(condition, branch1, branch2);
+	}
+	private Stmt whenStatement() {
+		List<Expr> conditions = new ArrayList<>();
+		List<Stmt> branches= new ArrayList<>();
+		conditions.add(expression());
+		takeToken(Tokens.THEN,"Ey up! Was expecting 'then'");
+		branches.add(statement());
+		while(match(new Tokens[]{Tokens.WHEN})) {
+			conditions.add(expression());
+			takeToken(Tokens.THEN,"Ey up! Was expecting 'then'");
+			branches.add(statement());
+		}
+		Stmt branch2 = null;
+		if(match(new Tokens[]{Tokens.ELSE})) {
+			branch2 = statement();
+		}
+		takeToken(Tokens.OVER,"Ey up! Was expecting 'oer'");
+		return new Stmt.When(conditions, branches, branch2);
 		
 	}
 	
@@ -116,7 +152,7 @@ public class Parser {
 	}
 	private Expr assignment() {
 		Tokens[] tokens = {Tokens.COLON_EQ};
-		Expr expr = equality();
+		Expr expr = or();
 		if(match(tokens)) {
 			Expr value = assignment();
 			if(expr instanceof Expr.Var) {
@@ -127,6 +163,28 @@ public class Parser {
 		}
 		return expr;
 		
+	}
+	private Expr or() {
+		Expr expr = and();
+	
+	    while (match(new Tokens[]{Tokens.OR})) {
+	      Tokens op = previous();
+	      Expr right = and();
+	      expr = new Expr.Logical(expr, op, right);
+	    }
+	
+	    return expr;
+	}
+	private Expr and() {
+		Expr expr = equality();
+		
+	    while (match(new Tokens[]{Tokens.AND})) {
+	      Tokens op = previous();
+	      Expr right = equality();
+	      expr = new Expr.Logical(expr, op, right);
+	    }
+	
+	    return expr;
 	}
 	private Expr equality() {
 		Tokens[] tokens = {Tokens.EQUAL,Tokens.EXCLA_EQ};

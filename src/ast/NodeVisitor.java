@@ -1,15 +1,9 @@
 package ast;
 
-import ast.Stmt.DefVar;
-import ast.Expr.Assignment;
-import ast.Expr.Binary;
-import ast.Expr.Group;
-import ast.Expr.Primary;
-import ast.Expr.Unary;
-import ast.Expr.Var;
-import ast.Stmt.Expression;
-import ast.Stmt.ForgetVar;
-import ast.Stmt.Print;
+import ast.Expr.*;
+import ast.Stmt.*;
+
+
 
 public interface NodeVisitor {
 	public Object visitBinaryExpr(Binary expr);
@@ -22,4 +16,7 @@ public interface NodeVisitor {
 	public Object visitVarExpr(Var var);
 	public Object visitAssignmentExpr(Assignment assignment);
 	public Object visitForgetVar(ForgetVar forgetVar);
+	public Object visitIf(If if1);
+	public Object visitLogicExpr(Logical logical);
+	public Object visitWhen(When when);
 }

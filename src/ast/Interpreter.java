@@ -5,13 +5,16 @@ import java.util.ArrayList;
 import ast.Expr.Assignment;
 import ast.Expr.Binary;
 import ast.Expr.Group;
+import ast.Expr.Logical;
 import ast.Expr.Primary;
 import ast.Expr.Unary;
 import ast.Expr.Var;
 import ast.Stmt.DefVar;
 import ast.Stmt.Expression;
 import ast.Stmt.ForgetVar;
+import ast.Stmt.If;
 import ast.Stmt.Print;
+import ast.Stmt.When;
 import enums.Tokens;
 import enums.Type;
 import lexer.Lexer;
@@ -76,7 +79,6 @@ public class Interpreter implements NodeVisitor {
 			checkNumOperands(expr.op,left,right);
 			return (Integer)left - (Integer)right;
 		case PLUS:
-			
 			checkNumOperands(expr.op,left,right);
 			return (Integer)left + (Integer)right;
 		case STAR:
@@ -91,7 +93,24 @@ public class Interpreter implements NodeVisitor {
 		}
 		return null;
 	}
-
+	private Boolean compareStrings(String left, String right, Tokens op) {
+		int comp = left.compareTo(right);
+		switch(comp) {
+		case -1: switch(op) {
+		case LESS:case LESS_EQ:return true;
+		case GREAT:case GREAT_EQ: return false;
+		}
+		case 0: switch(op) {
+		case GREAT_EQ:case LESS_EQ:return true;
+		case GREAT:case LESS: return false;
+		}
+		case 1: switch(op) {
+		case LESS:case LESS_EQ:return false;
+		case GREAT:case GREAT_EQ: return true;
+		}
+		default: throw error("Comparison error: "+left+" : "+right);
+		}
+	}
 	
 	private boolean isEqual(Object left, Object right) {
 		if (left == null && right == null) return true;
@@ -233,6 +252,10 @@ public class Interpreter implements NodeVisitor {
 		}
 		throw error("Unknown Type");
 	}
+	//Method to validate input to binary operators
+	private Boolean validate(Object left, Object right, Tokens op) {
+		return null;
+	}
 	
 	private Tokens getType(Object value) {
 		switch(checkType(value)) {
@@ -252,8 +275,42 @@ public class Interpreter implements NodeVisitor {
 		
 		i.interpret(p.parseInput(lexed));
 			
-		
-		
+	}
+	@Override
+	public Object visitIf(Stmt.If if1) {
+		if (isBool(if1.condition.accept(this))) {
+			if1.thenStmt.accept(this);
+		}
+		else if(if1.elseStmt != null) {
+			if1.elseStmt.accept(this);
+		}
+		return null;
+	}
+	@Override
+	public Object visitLogicExpr(Logical logical) {
+		Object left = logical.left.accept(this);
+		if(logical.op == Tokens.OR) {
+			if (isBool(left)) {
+				return left;
+			}
+		}else {
+			if(!isBool(left)) {
+				return left;
+			}
+		}
+		return logical.right.accept(this);
+	}
+	@Override
+	public Object visitWhen(When when) {
+		for(int i=0;i<when.conditions.size();i++) {
+			if(isBool(when.conditions.get(i).accept(this))) {
+				when.stmts.get(i).accept(this);
+				return null;
+			}
+		}if (when.elseStmt != null) {
+			when.elseStmt.accept(this);
+		}
+		return null;
 	}
 	
 

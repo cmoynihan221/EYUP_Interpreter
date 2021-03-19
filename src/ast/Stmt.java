@@ -1,5 +1,7 @@
 package ast;
 
+import java.util.List;
+
 import enums.Tokens;
 
 public interface Stmt {
@@ -50,5 +52,57 @@ public interface Stmt {
 		final String name;		
 		
 	}
-
+	class If implements Stmt{
+		Expr condition;
+		Stmt thenStmt,elseStmt;
+		public If(Expr condition, Stmt thenStmt, Stmt elseStmt) {
+			this.condition = condition;
+			this.thenStmt = thenStmt;
+			this.elseStmt = elseStmt;
+		}
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			return visitor.visitIf(this);
+		}
+		
+	}
+	class When implements Stmt{
+		List<Expr> conditions;
+		List<Stmt> stmts;
+		Stmt elseStmt;
+		public When(List<Expr> conditions, List<Stmt> stmts, Stmt elseStmt) {
+			this.conditions = conditions;
+			this.stmts = stmts;
+			this.elseStmt = elseStmt;
+		}
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			return visitor.visitWhen(this);
+		}
+		
+	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

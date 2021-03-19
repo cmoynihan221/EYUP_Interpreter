@@ -97,7 +97,21 @@ public interface Expr {
 		 final Expr value;
 	 }
 	
-	
+	 class Logical implements Expr{
+			public Logical(Expr left, Tokens op, Expr right) {
+			      this.left = left;
+			      this.op = op;
+			      this.right = right;
+			    }
+			//accept method redirects to visitor 
+			@Override
+			public Object accept(NodeVisitor visitor) {
+				 return visitor.visitLogicExpr(this);
+			}
+		    final Expr left;
+		    final Tokens op;
+		    final Expr right;
+		}
 
 	
 	
