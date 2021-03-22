@@ -10,7 +10,7 @@ import ast.Expr;
 public class RTEnvironment {
 	private final RTEnvironment enclosed;
 	private final Map<String,EnvVar> values = new HashMap<>();
-	private static class RuntimeError extends RuntimeException {}
+	
 	public RTEnvironment() {
 		enclosed = null;
 	}
@@ -27,9 +27,9 @@ public class RTEnvironment {
 		if (enclosed != null) return enclosed.get(name);
 		throw error("Flummoxed: weerz "+name+"?");
 	}
-	private RuntimeError error(String error) {
+	private RuntimeException error(String error) {
 		core.Error.runtimeError(error);
-		return new RuntimeError();
+		return new RuntimeException();
 	}
 	public void assign(String name, EnvVar value) {
 		if(values.containsKey(name)) {

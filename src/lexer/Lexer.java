@@ -49,7 +49,7 @@ public class Lexer {
 		keywords.put("then", Tokens.THEN);
 		keywords.put("else", Tokens.ELSE);
 		keywords.put("when", Tokens.WHEN);
-		keywords.put("gowan", Tokens.GOWAN);
+		keywords.put("gowon", Tokens.GOWON);
 		keywords.put("wang", Tokens.WANG);
 		keywords.put("while", Tokens.WHILE);
 		keywords.put("allus", Tokens.ALLUS);
@@ -103,7 +103,7 @@ public class Lexer {
 		current_pointer = 0;
 		output = new OutputTuple();
 		newToken();
-		output.tokens.add(Tokens.EOI);
+		
 		return output;
 	}
 	

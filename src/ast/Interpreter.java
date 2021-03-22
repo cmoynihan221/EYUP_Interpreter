@@ -1,9 +1,11 @@
 package ast;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import ast.Expr.Assignment;
 import ast.Expr.Binary;
+import ast.Expr.Call;
 import ast.Expr.Group;
 import ast.Expr.Logical;
 import ast.Expr.Primary;
@@ -15,16 +17,19 @@ import ast.Stmt.ForgetVar;
 import ast.Stmt.If;
 import ast.Stmt.Print;
 import ast.Stmt.When;
+import ast.Stmt.While;
 import enums.Tokens;
 import enums.Type;
 import lexer.Lexer;
 import parser.Parser;
+import runtime.Callable;
 import runtime.EnvVar;
 import runtime.RTEnvironment;
 
 public class Interpreter implements NodeVisitor {
-	private RTEnvironment rt = new RTEnvironment();
-	private static class RuntimeError extends RuntimeException {}
+	final RTEnvironment global = new RTEnvironment();
+	private RTEnvironment rt = global;
+	
 	public Interpreter() {
 		// TODO Auto-generated constructor stub
 	}
@@ -33,9 +38,10 @@ public class Interpreter implements NodeVisitor {
 			for(Stmt stmt:statements) {
 				stmt.accept(this);
 			}
-		}catch(RuntimeError error) {
-			error("Error");
+		}catch(RuntimeException error) {
+			error("runtime error at interpret");
 		}
+		
 	}
 
 	private String toString(Object value) {
@@ -230,9 +236,9 @@ public class Interpreter implements NodeVisitor {
 	    if (object instanceof Boolean) return (boolean)object;
 	    return true;
 	 }
-	private RuntimeError error(String error) {
+	private RuntimeException error(String error) {
 	    core.Error.runtimeError(error);
-		return new RuntimeError();
+		return new RuntimeException();
 	}
 	private Type checkType(Object value) {
 		if (value instanceof Integer) {
@@ -271,9 +277,15 @@ public class Interpreter implements NodeVisitor {
 		Parser p = new Parser();
 		Lexer l = new Lexer();
 		Interpreter i = new Interpreter();
-		lexer.OutputTuple lexed = l.lexString("write(3.1+4.5)");
-		
+		lexer.OutputTuple lexed = l.lexString("if x<7 then write(5) else write(6) oer");
+		lexed.tokens.add(Tokens.EOI);
 		i.interpret(p.parseInput(lexed));
+		//lexed = l.lexString("");
+		//.tokens.add(Tokens.EOI);
+		//.interpret(p.parseInput(lexed));
+		//lexed = l.lexString("");
+		//lexed.tokens.add(Tokens.EOI);
+		//i.interpret(p.parseInput(lexed));
 			
 	}
 	@Override
@@ -311,6 +323,36 @@ public class Interpreter implements NodeVisitor {
 			when.elseStmt.accept(this);
 		}
 		return null;
+	}
+	@Override
+	public Object visitWhile(While while1) {
+		Object condition = while1.condition.accept(this);
+		while(isBool(condition)) {
+			for(int i=0;i<while1.body.size();i++) {
+				while1.body.get(i).accept(this);
+			}
+			condition = while1.condition.accept(this);
+		}
+		return null;
+	}
+	@Override
+	public Object visitCallExpr(Call call) {
+		Object called = call.called.accept(this);
+		List<Object> args = new ArrayList<>();
+		for (Expr arg : call.args) {
+			args.add(arg.accept(this));
+		}
+		if(!(called instanceof Callable)) {
+			throw new RuntimeException("Can only call functions and bodgers");
+		}
+		Callable function = (Callable)called;
+		if(args.size() != function.arity()) {
+			throw new RuntimeException("Expected " +
+			          function.arity() + " arguments but got " +
+			          args.size());
+		}
+		return function.call(this, args);
+		
 	}
 	
 

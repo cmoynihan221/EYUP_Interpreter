@@ -7,7 +7,7 @@ public class Launcher {
 	private static String cmd = "cmd.exe /c cd bin & start ";
 	private static String eyup = "cmd.exe /k java core.Loop";
 	private static String exit = "taskkill /f /im cmd.exe";
-	
+	//ecore.Loop.main(new String[] {});
 	public static void main(String[] args) throws IOException {
 		Runtime rt = Runtime.getRuntime();
 		try {

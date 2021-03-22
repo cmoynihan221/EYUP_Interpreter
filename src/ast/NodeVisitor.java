@@ -19,4 +19,7 @@ public interface NodeVisitor {
 	public Object visitIf(If if1);
 	public Object visitLogicExpr(Logical logical);
 	public Object visitWhen(When when);
+	public Object visitWhile(While while1);
+	public Object visitCallExpr(Call call);
+	
 }

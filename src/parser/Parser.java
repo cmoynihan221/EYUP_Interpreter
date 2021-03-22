@@ -31,8 +31,10 @@ public class Parser {
 			}
 			return parsedStatements;
 			
-		} catch(ParseError error) {
-			throw error("parseInput error");
+		} catch(RuntimeException error) {
+			
+			return parsedStatements;
+			
 		}
 	}
 	private Stmt definition() {
@@ -87,6 +89,12 @@ public class Parser {
 		}
 		if(match(new Tokens[]{Tokens.WHEN})) {
 			return whenStatement();
+		}
+		if(match(new Tokens[]{Tokens.WHILE})) {
+			return whileStatement();
+		}
+		if(match(new Tokens[]{Tokens.GOWON})) {
+			return gowanStatement();
 		}
 		return exprStmt();
 		
@@ -145,6 +153,20 @@ public class Parser {
 		takeToken(Tokens.OVER,"Ey up! Was expecting 'oer'");
 		return new Stmt.When(conditions, branches, branch2);
 		
+	}
+	private Stmt whileStatement() {
+		Expr condition = expression();
+		List<Stmt> statements = new ArrayList<>();
+		takeToken(Tokens.GOWON,"Ey up! Was expecting 'gowon'");
+		while(!match(new Tokens[] {Tokens.OVER})) {
+			statements.add(statement());	
+			}
+		//takeToken(Tokens.OVER,"Ey up! Was expecting 'oer'");
+		return new Stmt.While(condition, statements);
+	}
+	
+	private Stmt gowanStatement() {
+		return null;
 	}
 	
 	private Expr expression() {
@@ -245,8 +267,34 @@ public class Parser {
 			Expr right = group();
 			return new Expr.Unary(op, right);
 		}
-		return group();
+		return call();
 	}
+	private Expr call(){
+		Expr expr = group();
+		while(true) {
+			if (match(new Tokens[]{Tokens.L_PAREN})) {
+				expr = endCall(expr);
+			}else{
+				break;
+			}
+		}
+		return expr;
+	}
+	 private Expr endCall(Expr callee) {
+		    List<Expr> arguments = new ArrayList<>();
+		    if (!check(Tokens.R_PAREN)) {
+		      do {
+		    	  if(arguments.size()>=255) {
+		    		  error("Can't have more than 255 arguments. ");
+		    	  }
+		        arguments.add(expression());
+		      } while (match(new Tokens[]{Tokens.COMMA}));
+		    }
+
+		    takeToken(Tokens.R_PAREN,"Expect ')' after arguments.");
+
+		    return new Expr.Call(callee, arguments);
+		  }
 	private Expr group() {
 		if (match(new Tokens[]{Tokens.L_PAREN})) {
 			Expr expr = expression();
@@ -260,7 +308,6 @@ public class Parser {
 	
 	
 	private Expr primary() {	
-		
 		//debug("enter primary");
 		if (match(new Tokens[]{Tokens.STRING})) {
 			String value = (String)advanceValue();
@@ -332,9 +379,9 @@ public class Parser {
 		throw error(message);
 	}
 	
-	private ParseError error(String error) {
+	private RuntimeException error(String error) {
 	    core.Error.parseError(error);
-		return new ParseError();
+		return new RuntimeException();
 	}
 	private void debug(String function) {
 		System.out.println("Function: "+function);
@@ -350,7 +397,7 @@ public class Parser {
 		
 		
 		for (Stmt stmt:p.parseInput(lexed)) {
-			stmt.accept(new NodePrintVisitor());
+			//stmt.accept(new NodePrintVisitor());
 		}
 		
 		

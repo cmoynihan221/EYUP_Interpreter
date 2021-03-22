@@ -1,4 +1,6 @@
 package ast;
+import java.util.List;
+
 import enums.Tokens;
 
 //Abstract Expression Cast With different expression types 
@@ -112,6 +114,22 @@ public interface Expr {
 		    final Tokens op;
 		    final Expr right;
 		}
+	 
+	 class Call implements Expr{
+		 public Call(Expr called, List<Expr> args) {
+		      this.called = called;
+		      this.args = args;
+		      
+		    }
+		//accept method redirects to visitor 
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			 return visitor.visitCallExpr(this);
+		}
+	    final Expr called;
+	    final List<Expr> args;
+	   
+	 }
 
 	
 	

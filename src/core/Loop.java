@@ -2,11 +2,13 @@ package core;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 
 import ast.Interpreter;
-import ast.NodePrintVisitor;
+//import ast.NodePrintVisitor;
 import ast.Stmt;
 import enums.Tokens;
 import lexer.Lexer;
@@ -17,15 +19,50 @@ public class Loop {
 	private static Lexer l = new Lexer();
 	private static Parser p = new Parser();
 	private static Interpreter i = new Interpreter();
+	//public static console.JavaConsole jc = new console.JavaConsole();
 	
+	private static Boolean checkTokens(lexer.OutputTuple ot){
+		Tokens[] tokens = {Tokens.IF, Tokens.WHEN,Tokens.WHILE, Tokens.FETTLE};
+		for(Tokens t : tokens) {
+			if(ot.tokens.contains(t)) {
+				return true;
+			}
+		}
+		return false; 
+	}
 	public static void main(String[] args) {
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-		
+		Integer callStack = 0;
 		while(true) {
 			String inputString;
-			try {				
-				inputString = input.readLine();
-				lexer.OutputTuple lexed = l.lexString(inputString);
+			try {	
+				lexer.OutputTuple lexed = new lexer.OutputTuple();		
+				inputString = input.readLine();		
+				
+				//System.out.println(inputString);
+				
+				lexer.OutputTuple lexedLine = l.lexString(inputString);
+				lexed.tokens.addAll( lexedLine.tokens);
+				lexed.tokenValues.addAll( lexedLine.tokenValues);			
+				if(checkTokens(lexed)&&!lexed.tokens.contains(Tokens.OVER)) {
+					callStack ++;
+					while(callStack > 0) {
+						for(int i = 0;i<callStack;i++) {
+							System.out.print("\t");
+						}
+						//System.out.print(callStack);
+						inputString = input.readLine();		
+						lexedLine = l.lexString(inputString);						
+						lexed.tokens.addAll( lexedLine.tokens);
+						lexed.tokenValues.addAll( lexedLine.tokenValues);
+						if(lexedLine.tokens.contains(Tokens.OVER)) callStack --;
+						if (checkTokens(lexedLine)) callStack ++;
+					}
+				}
+				lexed.tokens.add(Tokens.EOI);
+				
+				//System.out.println(lexed.tokens);
+				
 				if (lexed.tokens.contains(Tokens.ERROR)) {
 					Error.tokenError((String)lexed.tokenValues.get(0));
 				}
@@ -33,12 +70,10 @@ public class Loop {
 					ArrayList<Stmt> stmts = p.parseInput(lexed);
 					i.interpret(stmts);
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch(RuntimeException r) {
-				
+			} catch(IOException e) {
+				System.out.print("IO Error");	
 			}
-			//System.out.print("\n");	
+			
 		}
 	}
 }

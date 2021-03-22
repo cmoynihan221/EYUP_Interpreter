@@ -81,6 +81,20 @@ public interface Stmt {
 		}
 		
 	}
+	class While implements Stmt{
+		Expr condition;
+		List<Stmt> body;
+		
+		public While(Expr condition, List<Stmt> body) {
+			this.condition = condition;
+			this.body=body;
+		}
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			return visitor.visitWhile(this);
+		}
+		
+	}
 }
 
 
