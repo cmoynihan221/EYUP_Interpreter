@@ -5,6 +5,7 @@ import ast.Stmt.*;
 
 
 
+
 public interface NodeVisitor {
 	public Object visitBinaryExpr(Binary expr);
 	public Object visitGroupExpr(Group expr);
@@ -21,5 +22,7 @@ public interface NodeVisitor {
 	public Object visitWhen(When when);
 	public Object visitWhile(While while1);
 	public Object visitCallExpr(Call call);
+	public Object visitFunction(Function function);
+	public Object visitBlock(Block block);
 	
 }

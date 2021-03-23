@@ -38,13 +38,88 @@ public class Parser {
 		}
 	}
 	private Stmt definition() {
-		Tokens[] token = {Tokens.SUMMAT};
+		Tokens[] summat = {Tokens.SUMMAT};
+		Tokens[] fettle = {Tokens.FETTLE};
 		try {
-			if(match(token)) return varDef();
+			if(match(fettle))return function("function");
+			if(match(summat)) return varDef();
 			return statement();
 		} catch(ParseError error) {
 			throw error("assignment error");
 		}
+	}
+	private Stmt.Function function(String string) {
+		takeToken(Tokens.ID,"Expect function name");
+		String name = advanceValue();
+		List<FParam> params = null;
+		Integer total = 0;
+		//If match with (
+		if(match(new Tokens[]{Tokens.L_PAREN})) {
+			//Loop for parameters of different types
+			do {
+				List<String> p = new ArrayList<>(); 
+				//Loop for all parameters of a type
+				do {
+					//Check not larger than max
+					if(total >= 255) {
+						error("255 too many params.");
+					}
+					if(match(new Tokens[]{Tokens.ID})) {
+						p.add(advanceValue());
+						total ++;
+					}
+				//Loop while match comma
+				}while(match(new Tokens[]{Tokens.COMMA}));
+				
+				Tokens[] tokens = {Tokens.SCRIPT, Tokens.LETTER, Tokens.NUMBER, Tokens.ANSWER, Tokens.NONE};
+				Tokens type = null;
+				//If match type definition
+				if(match(new Tokens[]{Tokens.COLON})) {
+					//Match to type
+					if(match(tokens)) {
+						type = previous();
+					}else {
+						error("Incorrect Type definition");
+					}
+				}
+				//Add to params
+				FParam pType = new FParam(p, type);
+				params.add(pType);
+			} while(match(new Tokens[]{Tokens.COMMA}));
+			takeToken(Tokens.R_PAREN,"Expect ')'");
+		}
+		//check type of function return
+		Tokens type = null;
+		if(match(new Tokens[]{Tokens.COLON})) {
+			//Match to type
+			Tokens[] tokens = {Tokens.SCRIPT, Tokens.LETTER, Tokens.NUMBER, Tokens.ANSWER, Tokens.NONE};
+			if(match(tokens)) {
+				type = previous();
+			}else {
+				error("Incorrect Type definition");
+			}
+		}
+		List<Stmt>  body = null;
+		if(match(new Tokens[] {Tokens.GIZ})) {
+			body = block();
+		}
+		else if(match(new Tokens[] {Tokens.GIVEOVER})) {
+			body = null;
+		} else {
+			error("Expected giz or gizoer");
+		}
+		
+		return new Stmt.Function(name, params, body, type);
+	}
+	private List<Stmt> block(){
+		List<Stmt> statements = new ArrayList<>();
+
+	    while (!check(Tokens.OVER) && !isAtEnd()) {
+	      statements.add(definition());
+	    }
+
+	    takeToken(Tokens.OVER, "Expect 'oer' after block.");
+	    return statements;
 	}
 	//Declaring a variable in EYUP
 	private Stmt varDef() {
@@ -158,9 +233,7 @@ public class Parser {
 		Expr condition = expression();
 		List<Stmt> statements = new ArrayList<>();
 		takeToken(Tokens.GOWON,"Ey up! Was expecting 'gowon'");
-		while(!match(new Tokens[] {Tokens.OVER})) {
-			statements.add(statement());	
-			}
+		statements = block();
 		//takeToken(Tokens.OVER,"Ey up! Was expecting 'oer'");
 		return new Stmt.While(condition, statements);
 	}
@@ -350,8 +423,8 @@ public class Parser {
 		return previous();
 		
 	}
-	private Object advanceValue() {
-		Object value = input.tokenValues.get(currentValue);
+	private String advanceValue() {
+		String value = (String)input.tokenValues.get(currentValue);
 		currentValue++;
 		return value; 
 	}
@@ -393,12 +466,13 @@ public class Parser {
 	public static void main(String[] args) {
 		Parser p = new Parser();
 		Lexer l = new Lexer();
-		lexer.OutputTuple lexed = l.lexString("var");
+		lexer.OutputTuple lexed = l.lexString("fettle program(n:Number):Letter giz"
+				+ "write(\"Hello\")"
+				+ "program = \"a\""
+				+ "oer");
+		lexed.tokens.add(Tokens.EOI);
+		p.parseInput(lexed);
 		
-		
-		for (Stmt stmt:p.parseInput(lexed)) {
-			//stmt.accept(new NodePrintVisitor());
-		}
 		
 		
 		}

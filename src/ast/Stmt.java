@@ -3,6 +3,7 @@ package ast;
 import java.util.List;
 
 import enums.Tokens;
+import parser.FParam;
 
 public interface Stmt {
 	
@@ -94,6 +95,33 @@ public interface Stmt {
 			return visitor.visitWhile(this);
 		}
 		
+	}
+	
+	class Function implements Stmt{
+		String name;
+		public List<FParam> params;
+		public List<Stmt> body;
+		public Tokens type;
+		public Function(String name, List<FParam> params, List<Stmt> body, Tokens type) {
+			this.name = name;
+			this.params = params;
+			this.body = body; 
+			this.type = type;
+		}
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			return visitor.visitFunction(this);
+		}
+	}
+	class Block implements Stmt{
+		List<Stmt> stmts;
+		public Block(List<Stmt> stmts) {
+			this.stmts = stmts; 
+		}
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			return visitor.visitBlock(this);
+		}
 	}
 }
 

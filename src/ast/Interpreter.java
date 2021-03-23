@@ -11,6 +11,7 @@ import ast.Expr.Logical;
 import ast.Expr.Primary;
 import ast.Expr.Unary;
 import ast.Expr.Var;
+import ast.Stmt.Block;
 import ast.Stmt.DefVar;
 import ast.Stmt.Expression;
 import ast.Stmt.ForgetVar;
@@ -18,17 +19,19 @@ import ast.Stmt.If;
 import ast.Stmt.Print;
 import ast.Stmt.When;
 import ast.Stmt.While;
+import ast.Stmt.Function;
 import enums.Tokens;
 import enums.Type;
 import lexer.Lexer;
 import parser.Parser;
 import runtime.Callable;
 import runtime.EnvVar;
+import runtime.EyupFunction;
 import runtime.RTEnvironment;
 
 public class Interpreter implements NodeVisitor {
-	final RTEnvironment global = new RTEnvironment();
-	private RTEnvironment rt = global;
+	public final RTEnvironment globals = new RTEnvironment();
+	private RTEnvironment rt = globals;
 	
 	public Interpreter() {
 		// TODO Auto-generated constructor stub
@@ -354,6 +357,31 @@ public class Interpreter implements NodeVisitor {
 		return function.call(this, args);
 		
 	}
+	@Override
+	public Object visitFunction(Function function) {
+		EyupFunction fun = new EyupFunction(function);
+		rt.define(function.name, new EnvVar(fun, fun.type()));
+		return null;
+	}
+	@Override
+	public Object visitBlock(Block block) {
+		runBlock(block.stmts, new RTEnvironment(rt));
+		return null;
+	}
+	public void runBlock(List<Stmt> stmts, RTEnvironment rt) {
+		RTEnvironment previous = this.rt;
+		try {
+			this.rt = rt;
+			for(Stmt stmt:stmts) {
+				stmt.accept(this);
+			}
+		}finally {
+			this.rt = previous;
+		}
+		
+	}
+	
+	
 	
 
 }
