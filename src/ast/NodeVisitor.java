@@ -24,5 +24,6 @@ public interface NodeVisitor {
 	public Object visitCallExpr(Call call);
 	public Object visitFunction(Function function);
 	public Object visitBlock(Block block);
+	public Object visitReturn(Return return1);
 	
 }

@@ -123,6 +123,17 @@ public interface Stmt {
 			return visitor.visitBlock(this);
 		}
 	}
+	class Return implements Stmt{
+		Expr value;
+		public Return(Expr value) {
+			this.value = value; 
+		}
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			return visitor.visitReturn(this);
+		}
+	}
+	
 }
 
 

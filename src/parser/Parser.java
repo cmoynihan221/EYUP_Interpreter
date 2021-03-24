@@ -17,14 +17,16 @@ public class Parser {
 	int current ; 
 	int currentValue; 
 	OutputTuple input;
+	String currentFunction = null;
 	
-	private static class ParseError extends RuntimeException {}
+	
 	
 	public ArrayList<Stmt> parseInput(OutputTuple output) {
 		ArrayList<Stmt> parsedStatements = new ArrayList<>();
 		input = output;
 		current = 0; 
 		currentValue = 0; 
+		
 		try {
 			while (!isAtEnd()) {
 				parsedStatements.add(definition());
@@ -38,23 +40,28 @@ public class Parser {
 		}
 	}
 	private Stmt definition() {
+		
 		Tokens[] summat = {Tokens.SUMMAT};
 		Tokens[] fettle = {Tokens.FETTLE};
 		try {
 			if(match(fettle))return function("function");
 			if(match(summat)) return varDef();
 			return statement();
-		} catch(ParseError error) {
+		} catch(RuntimeException error) {
+			System.out.println(error);
 			throw error("assignment error");
+			
 		}
 	}
 	private Stmt.Function function(String string) {
 		takeToken(Tokens.ID,"Expect function name");
 		String name = advanceValue();
+		currentFunction = name;
 		List<FParam> params = null;
 		Integer total = 0;
 		//If match with (
 		if(match(new Tokens[]{Tokens.L_PAREN})) {
+			params = new ArrayList<>();
 			//Loop for parameters of different types
 			do {
 				List<String> p = new ArrayList<>(); 
@@ -87,9 +94,11 @@ public class Parser {
 				params.add(pType);
 			} while(match(new Tokens[]{Tokens.COMMA}));
 			takeToken(Tokens.R_PAREN,"Expect ')'");
+			
 		}
 		//check type of function return
 		Tokens type = null;
+		
 		if(match(new Tokens[]{Tokens.COLON})) {
 			//Match to type
 			Tokens[] tokens = {Tokens.SCRIPT, Tokens.LETTER, Tokens.NUMBER, Tokens.ANSWER, Tokens.NONE};
@@ -108,17 +117,19 @@ public class Parser {
 		} else {
 			error("Expected giz or gizoer");
 		}
-		
+		currentFunction = null;
 		return new Stmt.Function(name, params, body, type);
 	}
 	private List<Stmt> block(){
 		List<Stmt> statements = new ArrayList<>();
-
+		
 	    while (!check(Tokens.OVER) && !isAtEnd()) {
+	    	
 	      statements.add(definition());
 	    }
-
+	    
 	    takeToken(Tokens.OVER, "Expect 'oer' after block.");
+	    
 	    return statements;
 	}
 	//Declaring a variable in EYUP
@@ -153,6 +164,14 @@ public class Parser {
 	
 	private Stmt statement() {
 		Tokens[] tokens = {Tokens.WRITE};
+		if(peek() == Tokens.ID) {
+			
+			//System.out.println(peekValue().compareTo(currentFunction)==0);
+			if (currentFunction!=null &&peekValue().compareTo(currentFunction)==0) {
+				match(new Tokens[]{Tokens.ID});
+				return returnStmt();
+			}
+		}
 		if (match(tokens)) {
 			return printStmt();
 		}
@@ -171,10 +190,19 @@ public class Parser {
 		if(match(new Tokens[]{Tokens.GOWON})) {
 			return gowanStatement();
 		}
+		
 		return exprStmt();
 		
 	}
 	
+	private Stmt returnStmt() {
+		//debug("return");
+		String name = advanceValue(); 
+		Expr value = null;
+		takeToken(Tokens.COLON_EQ, "Expect  ':=' for return");
+		value = expression();
+		return new Stmt.Return(value);
+	}
 	private Stmt forgetStmt() {
 		if (match(new Tokens[]{Tokens.ID})) {
 			String name = (String) advanceValue();
@@ -254,6 +282,7 @@ public class Parser {
 				String name = ((Expr.Var)expr).name;
 				return new Expr.Assignment(name, value);
 			}
+			
 			error("Assignment error");
 		}
 		return expr;
@@ -343,6 +372,7 @@ public class Parser {
 		return call();
 	}
 	private Expr call(){
+	
 		Expr expr = group();
 		while(true) {
 			if (match(new Tokens[]{Tokens.L_PAREN})) {
@@ -353,8 +383,9 @@ public class Parser {
 		}
 		return expr;
 	}
-	 private Expr endCall(Expr callee) {
+	 private Expr endCall(Expr called) {
 		    List<Expr> arguments = new ArrayList<>();
+		
 		    if (!check(Tokens.R_PAREN)) {
 		      do {
 		    	  if(arguments.size()>=255) {
@@ -366,7 +397,7 @@ public class Parser {
 
 		    takeToken(Tokens.R_PAREN,"Expect ')' after arguments.");
 
-		    return new Expr.Call(callee, arguments);
+		    return new Expr.Call(called, arguments);
 		  }
 	private Expr group() {
 		if (match(new Tokens[]{Tokens.L_PAREN})) {
@@ -381,7 +412,7 @@ public class Parser {
 	
 	
 	private Expr primary() {	
-		//debug("enter primary");
+	
 		if (match(new Tokens[]{Tokens.STRING})) {
 			String value = (String)advanceValue();
 			if(value.length() == 1) {
@@ -403,7 +434,7 @@ public class Parser {
 		if (match(new Tokens[]{Tokens.ID})) {
 			return new Expr.Var((String)advanceValue());
 			}
-		//debug("exit primary");
+		
 		throw error("primary");
 	}
 	public boolean match(Tokens[] tokens) {
@@ -440,6 +471,9 @@ public class Parser {
 	private Tokens peek() {
 		return input.tokens.get(current);
 	}
+	private String peekValue() {
+		return (String)input.tokenValues.get(currentValue);
+	}
 
 	private boolean isAtEnd() {
 		return (peek() == Tokens.EOI);
@@ -466,10 +500,7 @@ public class Parser {
 	public static void main(String[] args) {
 		Parser p = new Parser();
 		Lexer l = new Lexer();
-		lexer.OutputTuple lexed = l.lexString("fettle program(n:Number):Letter giz"
-				+ "write(\"Hello\")"
-				+ "program = \"a\""
-				+ "oer");
+		lexer.OutputTuple lexed = l.lexString("fettle program(n:Number):Letter giz write(\"Hello\") program = \"a\" oer");
 		lexed.tokens.add(Tokens.EOI);
 		p.parseInput(lexed);
 		

@@ -17,11 +17,15 @@ public class EyupFunction implements Callable{
 	public int arity() {
 		
 	Integer paramnum = 0;
-		for (int i = 0; i<declaration.params.size();i++) {
-			for (int n = 0; n<declaration.params.get(i).size();i++) {
-				paramnum++;
-			}
+	if(declaration.params!=null) {
+	for (int i = 0; i<declaration.params.size();i++) {
+		for (int n = 0; n<declaration.params.get(i).size();n++) {
+			paramnum++;
 		}
+	}
+	}
+	
+		
 		return paramnum;
 	}
 
@@ -35,15 +39,22 @@ public class EyupFunction implements Callable{
 		//type checking
 		RTEnvironment envi = new RTEnvironment(interpreter.globals);
 		Integer paramnum = 0;
+		if(declaration.params!=null) {
 		for (int i = 0; i<declaration.params.size();i++) {
-			for (int n = 0; n<declaration.params.get(i).size();i++) {
+			for (int n = 0; n<declaration.params.get(i).size();n++) {
 				checkType(declaration.params.get(i).type, args.get(paramnum));
+				envi.define(declaration.params.get(i).params.get(paramnum), new EnvVar( args.get(paramnum),declaration.params.get(i).type));
 				paramnum++;
 			}
 			
-			envi.define(declaration.params.get(i).params.get(paramnum), new EnvVar( args.get(paramnum),declaration.params.get(i).type));
+			
 		}
-		interpreter.runBlock(declaration.body, envi);
+		}
+		try {
+			interpreter.runBlock(declaration.body, envi);
+		}catch(Return returnValue) {
+			return returnValue.value;
+		}
 		return null;
 		
 	}

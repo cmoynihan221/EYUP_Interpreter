@@ -17,6 +17,7 @@ import ast.Stmt.Expression;
 import ast.Stmt.ForgetVar;
 import ast.Stmt.If;
 import ast.Stmt.Print;
+import ast.Stmt.Return;
 import ast.Stmt.When;
 import ast.Stmt.While;
 import ast.Stmt.Function;
@@ -42,6 +43,7 @@ public class Interpreter implements NodeVisitor {
 				stmt.accept(this);
 			}
 		}catch(RuntimeException error) {
+			System.out.print(error);
 			error("runtime error at interpret");
 		}
 		
@@ -203,6 +205,7 @@ public class Interpreter implements NodeVisitor {
 
 	@Override
 	public Object visitAssignmentExpr(Assignment assignment) {
+		//System.out.print("debug");
 		Object value  = assignment.value.accept(this);
 		Tokens type = Tokens.NONE;
 		//needs to check type of variable
@@ -280,12 +283,18 @@ public class Interpreter implements NodeVisitor {
 		Parser p = new Parser();
 		Lexer l = new Lexer();
 		Interpreter i = new Interpreter();
-		lexer.OutputTuple lexed = l.lexString("if x<7 then write(5) else write(6) oer");
+		lexer.OutputTuple lexed = l.lexString("summat x := 5 ");
 		lexed.tokens.add(Tokens.EOI);
 		i.interpret(p.parseInput(lexed));
-		//lexed = l.lexString("");
-		//.tokens.add(Tokens.EOI);
-		//.interpret(p.parseInput(lexed));
+		lexed = l.lexString("fettle sqr(n:Number):Number giz sqr := n*x oer");
+		lexed.tokens.add(Tokens.EOI);
+		i.interpret(p.parseInput(lexed));
+		lexed = l.lexString("x := sqr(3)");
+		lexed.tokens.add(Tokens.EOI);
+		i.interpret(p.parseInput(lexed));
+		lexed = l.lexString("write(x)");
+		lexed.tokens.add(Tokens.EOI);
+		i.interpret(p.parseInput(lexed));
 		//lexed = l.lexString("");
 		//lexed.tokens.add(Tokens.EOI);
 		//i.interpret(p.parseInput(lexed));
@@ -345,15 +354,19 @@ public class Interpreter implements NodeVisitor {
 		for (Expr arg : call.args) {
 			args.add(arg.accept(this));
 		}
+		//System.out.println(called.getClass());
+		
 		if(!(called instanceof Callable)) {
 			throw new RuntimeException("Can only call functions and bodgers");
 		}
 		Callable function = (Callable)called;
+		
 		if(args.size() != function.arity()) {
 			throw new RuntimeException("Expected " +
 			          function.arity() + " arguments but got " +
 			          args.size());
 		}
+		
 		return function.call(this, args);
 		
 	}
@@ -379,6 +392,15 @@ public class Interpreter implements NodeVisitor {
 			this.rt = previous;
 		}
 		
+		
+	}
+	@Override
+	public Object visitReturn(Return return1) {
+		
+		Object value = null;
+		
+		if(return1.value!= null) value = return1.value.accept(this);
+		throw new runtime.Return(value);
 	}
 	
 	
