@@ -32,10 +32,14 @@ public class RTEnvironment {
 		return new RuntimeException();
 	}
 	public void assign(String name, EnvVar value) {
+		
 		if(values.containsKey(name)) {
+			
 			EnvVar stored = values.get(name);
 			if(checkType(value,stored)) {
+			
 				values.put(name, value);
+				
 				return;
 			}
 			throw error("Vexed: "+ name + " wi' bad'un "+ value.value+":"+value.type);
@@ -43,6 +47,7 @@ public class RTEnvironment {
 		}
 		if (enclosed != null) {
 			enclosed.assign(name,value);
+			System.out.println("Debug3");
 			return;
 		}
 		throw error("Flummoxed: weerz "+name+"?");
@@ -65,5 +70,15 @@ public class RTEnvironment {
 		else {
 			return false; 
 		}
+	}
+	public Object getAt(int dist, String name) {
+		return prior(dist).values.get(name);
+	}
+	public RTEnvironment prior(int dist) {
+		RTEnvironment env = this;
+		for(int i=0;i<dist;i++) {
+			env = env.enclosed;
+		}
+		return env;
 	}
 }

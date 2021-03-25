@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ast.Interpreter;
+import ast.Resolver;
 //import ast.NodePrintVisitor;
 import ast.Stmt;
 import enums.Tokens;
@@ -19,6 +20,7 @@ public class Loop {
 	private static Lexer l = new Lexer();
 	private static Parser p = new Parser();
 	private static Interpreter i = new Interpreter();
+	private static Resolver resolver = new Resolver(i);
 	//public static console.JavaConsole jc = new console.JavaConsole();
 	
 	private static Boolean checkTokens(lexer.OutputTuple ot){
@@ -68,7 +70,14 @@ public class Loop {
 				}
 				else {
 					ArrayList<Stmt> stmts = p.parseInput(lexed);
-					i.interpret(stmts);
+					try {
+				    resolver.resolve(stmts);
+				    i.interpret(stmts);
+				    }catch(RuntimeException e) {
+				    	
+				    }
+					
+					
 				}
 			} catch(IOException e) {
 				System.out.print("IO Error");	

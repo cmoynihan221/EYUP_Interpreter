@@ -5,5 +5,6 @@ public enum Type {
 	String,
 	Int,
 	Char,
-	Bool
+	Bool,
+	Instance
 }

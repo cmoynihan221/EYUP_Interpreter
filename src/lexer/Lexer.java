@@ -36,6 +36,7 @@ public class Lexer {
 		keywords.put("nay", Tokens.FALSE);
 		keywords.put("giz", Tokens.GIZ);
 		keywords.put("fettle", Tokens.FETTLE);
+		keywords.put("bodger", Tokens.BODGER);
 		keywords.put("gioer", Tokens.GIVEOVER);
 		keywords.put("oer", Tokens.OVER);
 		keywords.put("nowt", Tokens.NONE);

@@ -25,5 +25,6 @@ public interface NodeVisitor {
 	public Object visitFunction(Function function);
 	public Object visitBlock(Block block);
 	public Object visitReturn(Return return1);
+	public Object visitBodger(Bodger bodger);
 	
 }

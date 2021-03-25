@@ -1,7 +1,9 @@
 package ast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import ast.Expr.Assignment;
 import ast.Expr.Binary;
@@ -12,6 +14,7 @@ import ast.Expr.Primary;
 import ast.Expr.Unary;
 import ast.Expr.Var;
 import ast.Stmt.Block;
+import ast.Stmt.Bodger;
 import ast.Stmt.DefVar;
 import ast.Stmt.Expression;
 import ast.Stmt.ForgetVar;
@@ -27,12 +30,15 @@ import lexer.Lexer;
 import parser.Parser;
 import runtime.Callable;
 import runtime.EnvVar;
+import runtime.EyupBodger;
 import runtime.EyupFunction;
+import runtime.EyupInstance;
 import runtime.RTEnvironment;
 
 public class Interpreter implements NodeVisitor {
 	public final RTEnvironment globals = new RTEnvironment();
 	private RTEnvironment rt = globals;
+	private final Map<Expr, Integer> locals = new HashMap<>();
 	
 	public Interpreter() {
 		// TODO Auto-generated constructor stub
@@ -43,7 +49,7 @@ public class Interpreter implements NodeVisitor {
 				stmt.accept(this);
 			}
 		}catch(RuntimeException error) {
-			System.out.print(error);
+			System.out.println(error);
 			error("runtime error at interpret");
 		}
 		
@@ -200,7 +206,7 @@ public class Interpreter implements NodeVisitor {
 
 	@Override
 	public Object visitVarExpr(Var var) {
-		return rt.get(var.name);
+		return lookUpVariable(var.name, var);
 	}
 
 	@Override
@@ -225,81 +231,7 @@ public class Interpreter implements NodeVisitor {
 		return null;
 	}
 	
-	private void checkNumOperand(Tokens op, Object operand) {
-		if (operand instanceof Integer) return;
-		throw error( "Operand must be a number. Error on: "+ op);
-	}
-	private void checkStringOperands(Tokens op, Object left, Object right) {
-		if (left instanceof String && right instanceof String) return;
-		throw error("Operands must be Script. Error on: "+ op);
-	}
-	private void checkNumOperands(Tokens op, Object left, Object right) {
-	if (left instanceof Integer && right instanceof Integer) return;
-	throw error("Operands must be numbers. Error on: "+ op);
-	}
-	private boolean isBool(Object object) {
-	    if (object == null) return false;
-	    if (object instanceof Boolean) return (boolean)object;
-	    return true;
-	 }
-	private RuntimeException error(String error) {
-	    core.Error.runtimeError(error);
-		return new RuntimeException();
-	}
-	private Type checkType(Object value) {
-		if (value instanceof Integer) {
-			return Type.Int;
-		}
-		if (value instanceof Float) {
-			return Type.Float;
-		}
-		if (value instanceof String) {
-			if (((String) value).length() == 1) {
-				return Type.Char;
-			}
-			return Type.String;
-		}
-		if (value instanceof Boolean ) {
-			return Type.Bool;
-		}
-		throw error("Unknown Type");
-	}
-	//Method to validate input to binary operators
-	private Boolean validate(Object left, Object right, Tokens op) {
-		return null;
-	}
 	
-	private Tokens getType(Object value) {
-		switch(checkType(value)) {
-		case Int: case Float: return Tokens.NUMBER;
-		case Char: return Tokens.LETTER;
-		case String: return Tokens.SCRIPT;
-		case Bool: return Tokens.ANSWER;
-		}
-		throw error("Unknown Type");
-	}
-	
-	public static void main(String[] args) {
-		Parser p = new Parser();
-		Lexer l = new Lexer();
-		Interpreter i = new Interpreter();
-		lexer.OutputTuple lexed = l.lexString("summat x := 5 ");
-		lexed.tokens.add(Tokens.EOI);
-		i.interpret(p.parseInput(lexed));
-		lexed = l.lexString("fettle sqr(n:Number):Number giz sqr := n*x oer");
-		lexed.tokens.add(Tokens.EOI);
-		i.interpret(p.parseInput(lexed));
-		lexed = l.lexString("x := sqr(3)");
-		lexed.tokens.add(Tokens.EOI);
-		i.interpret(p.parseInput(lexed));
-		lexed = l.lexString("write(x)");
-		lexed.tokens.add(Tokens.EOI);
-		i.interpret(p.parseInput(lexed));
-		//lexed = l.lexString("");
-		//lexed.tokens.add(Tokens.EOI);
-		//i.interpret(p.parseInput(lexed));
-			
-	}
 	@Override
 	public Object visitIf(Stmt.If if1) {
 		if (isBool(if1.condition.accept(this))) {
@@ -372,7 +304,7 @@ public class Interpreter implements NodeVisitor {
 	}
 	@Override
 	public Object visitFunction(Function function) {
-		EyupFunction fun = new EyupFunction(function);
+		EyupFunction fun = new EyupFunction(function,rt);
 		rt.define(function.name, new EnvVar(fun, fun.type()));
 		return null;
 	}
@@ -403,7 +335,106 @@ public class Interpreter implements NodeVisitor {
 		throw new runtime.Return(value);
 	}
 	
+	private void checkNumOperand(Tokens op, Object operand) {
+		if (operand instanceof Integer) return;
+		throw error( "Operand must be a number. Error on: "+ op);
+	}
+	private void checkStringOperands(Tokens op, Object left, Object right) {
+		if (left instanceof String && right instanceof String) return;
+		throw error("Operands must be Script. Error on: "+ op);
+	}
+	private void checkNumOperands(Tokens op, Object left, Object right) {
+	if (left instanceof Integer && right instanceof Integer) return;
+	throw error("Operands must be numbers. Error on: "+ op);
+	}
+	private boolean isBool(Object object) {
+	    if (object == null) return false;
+	    if (object instanceof Boolean) return (boolean)object;
+	    return true;
+	 }
+	private RuntimeException error(String error) {
+	    core.Error.runtimeError(error);
+		return new RuntimeException();
+	}
+	private Type checkType(Object value) {
+		if (value instanceof Integer) {
+			return Type.Int;
+		}
+		if (value instanceof Float) {
+			return Type.Float;
+		}
+		if (value instanceof String) {
+			if (((String) value).length() == 1) {
+				return Type.Char;
+			}
+			return Type.String;
+		}
+		if (value instanceof Boolean ) {
+			return Type.Bool;
+		}
+		if (value instanceof EyupInstance ) {
+			return Type.Instance;
+		}
+		throw error("Unknown Type");
+	}
+	//Method to validate input to binary operators
+	private Boolean validate(Object left, Object right, Tokens op) {
+		return null;
+	}
 	
+	private Tokens getType(Object value) {
+
+		switch(checkType(value)) {
+		case Int: case Float: return Tokens.NUMBER;
+		case Char: return Tokens.LETTER;
+		case String: return Tokens.SCRIPT;
+		case Bool: return Tokens.ANSWER;
+		case Instance: return Tokens.INSTANCE;
+		}
+		throw error("Unknown Type");
+	}
+	public void resolve(Expr expr, int depth) {
+		locals.put(expr,depth);
+	}
+	private Object lookUpVariable(String name, Expr expr) {
+		Integer dist = locals.get(expr);
+		if(dist != null) {
+			return rt.getAt(dist, name);
+		}else {
+			return globals.get(name);
+		}
+	}
 	
+	public static void main(String[] args) {
+		Parser p = new Parser();
+		Lexer l = new Lexer();
+		Interpreter i = new Interpreter();
+		lexer.OutputTuple lexed = l.lexString("bodger circle");
+		lexed.tokens.add(Tokens.EOI);
+		i.interpret(p.parseInput(lexed));
+		lexed = l.lexString("summat x := eyup circle()");
+		lexed.tokens.add(Tokens.EOI);
+		i.interpret(p.parseInput(lexed));
+		//lexed = l.lexString("x := sqr(\"Hello\")");
+		//exed.tokens.add(Tokens.EOI);
+		//i.interpret(p.parseInput(lexed));
+		
+		//lexed = l.lexString("");
+		//lexed.tokens.add(Tokens.EOI);
+		//i.interpret(p.parseInput(lexed));
+			
+	}
+	@Override
+	public Object visitBodger(Bodger bodger) {
+		
+		rt.define(bodger.name, new EnvVar(null, Tokens.BODGER));
+		
+		EyupBodger bodg = new EyupBodger(bodger.name);
+		
+		rt.assign(bodger.name, new EnvVar(bodg, Tokens.BODGER));
+		
+		return null;
+	}
+	 
 
 }

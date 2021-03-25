@@ -9,8 +9,10 @@ import enums.Type;
 
 public class EyupFunction implements Callable{
 	private Stmt.Function declaration;
-	public EyupFunction(Stmt.Function dec) {
+	private final RTEnvironment closure;
+	public EyupFunction(Stmt.Function dec,RTEnvironment closure) {
 		this.declaration = dec;
+		this.closure = closure;
 	}
 
 	@Override
@@ -36,8 +38,8 @@ public class EyupFunction implements Callable{
 
 	@Override
 	public Object call(Interpreter interpreter, List<Object> args) {
-		//type checking
-		RTEnvironment envi = new RTEnvironment(interpreter.globals);
+		
+		RTEnvironment envi = new RTEnvironment(closure);
 		Integer paramnum = 0;
 		if(declaration.params!=null) {
 		for (int i = 0; i<declaration.params.size();i++) {

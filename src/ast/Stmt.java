@@ -133,6 +133,17 @@ public interface Stmt {
 			return visitor.visitReturn(this);
 		}
 	}
+	class Bodger implements Stmt{
+		String name;
+		public Bodger(String name) {
+			this.name = name;
+		
+		}
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			return visitor.visitBodger(this);
+		}
+	}
 	
 }
 

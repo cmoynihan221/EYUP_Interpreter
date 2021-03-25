@@ -43,15 +43,22 @@ public class Parser {
 		
 		Tokens[] summat = {Tokens.SUMMAT};
 		Tokens[] fettle = {Tokens.FETTLE};
+		Tokens[] bodger = {Tokens.BODGER};
 		try {
 			if(match(fettle))return function("function");
 			if(match(summat)) return varDef();
+			if(match(bodger)) return classDef();
 			return statement();
 		} catch(RuntimeException error) {
 			System.out.println(error);
 			throw error("assignment error");
 			
 		}
+	}
+	private Stmt classDef() {
+		takeToken(Tokens.ID, "Expected identifier");
+		String name = advanceValue();
+		return new Stmt.Bodger(name);
 	}
 	private Stmt.Function function(String string) {
 		takeToken(Tokens.ID,"Expect function name");
@@ -369,10 +376,25 @@ public class Parser {
 			Expr right = group();
 			return new Expr.Unary(op, right);
 		}
+		return instantiateCall();
+	}
+	private Expr instantiateCall() {
+		if(match(new Tokens[]{Tokens.EYUP})) {
+
+			List<Expr> arguments = new ArrayList<>();
+			Expr expr = group();
+			
+			if (match(new Tokens[]{Tokens.L_PAREN})) {
+				expr = endCall(expr);
+				return expr;
+			}else{
+				return new Expr.Call(expr,arguments);
+			}
+		}
 		return call();
 	}
 	private Expr call(){
-	
+		
 		Expr expr = group();
 		while(true) {
 			if (match(new Tokens[]{Tokens.L_PAREN})) {
@@ -385,12 +407,13 @@ public class Parser {
 	}
 	 private Expr endCall(Expr called) {
 		    List<Expr> arguments = new ArrayList<>();
-		
+	
 		    if (!check(Tokens.R_PAREN)) {
 		      do {
 		    	  if(arguments.size()>=255) {
 		    		  error("Can't have more than 255 arguments. ");
 		    	  }
+
 		        arguments.add(expression());
 		      } while (match(new Tokens[]{Tokens.COMMA}));
 		    }
