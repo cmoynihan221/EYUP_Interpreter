@@ -2,10 +2,12 @@ package core;
 
 
 import java.io.IOException;
-
+import core.Loop;
+@SuppressWarnings("unused")
 public class Launcher {
 	private static String cmd = "cmd.exe /c cd bin & start ";
-	private static String eyup = "cmd.exe /k java core.Loop";
+	private static String eyup = "cmd.exe /k java -cp .;eyup.jar core.Loop";
+	@SuppressWarnings("unused")
 	private static String exit = "taskkill /f /im cmd.exe";
 	//ecore.Loop.main(new String[] {});
 	public static void main(String[] args) throws IOException {

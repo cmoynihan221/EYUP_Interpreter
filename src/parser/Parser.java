@@ -1,8 +1,6 @@
 package parser;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import enums.Tokens;
@@ -10,7 +8,6 @@ import lexer.Lexer;
 import lexer.OutputTuple;
 import ast.*;
 import ast.Stmt;
-import threeAddressCode.*;
 
 
 public class Parser {
@@ -170,7 +167,7 @@ public class Parser {
 	}
 	
 	private Stmt statement() {
-		Tokens[] tokens = {Tokens.WRITE};
+		
 		if(peek() == Tokens.ID) {
 			
 			//System.out.println(peekValue().compareTo(currentFunction)==0);
@@ -179,7 +176,7 @@ public class Parser {
 				return returnStmt();
 			}
 		}
-		if (match(tokens)) {
+		if (match(new Tokens[]{Tokens.WRITE})) {
 			return printStmt();
 		}
 		if(match(new Tokens[]{Tokens.FORGET})) {
@@ -197,17 +194,36 @@ public class Parser {
 		if(match(new Tokens[]{Tokens.GOWON})) {
 			return gowanStatement();
 		}
+		if(match(new Tokens[] {Tokens.EYUP})) {
+			return eyupStatement();
+		}
+		if(match(new Tokens[] {Tokens.SITHE})) {
+			return sitheStmt();
+		}
 		
 		return exprStmt();
 		
 	}
 	
+	private Stmt sitheStmt() {
+		return new Stmt.SitheCall();
+			
+	}
+	
+	private Stmt eyupStatement() {
+		if(match(new Tokens[] {Tokens.ID})) {
+		String name = advanceValue(); 
+		return new Stmt.EyupCall(name);}
+		throw error("NOT A NAME");
+	}
 	private Stmt returnStmt() {
-		//debug("return");
+		
 		String name = advanceValue(); 
 		Expr value = null;
 		takeToken(Tokens.COLON_EQ, "Expect  ':=' for return");
+		
 		value = expression();
+		
 		return new Stmt.Return(value);
 	}
 	private Stmt forgetStmt() {
@@ -288,6 +304,8 @@ public class Parser {
 			if(expr instanceof Expr.Var) {
 				String name = ((Expr.Var)expr).name;
 				return new Expr.Assignment(name, value);
+			} else if(expr instanceof Expr.Get) {
+				error("Vexed: faffin' wi' " + ((Expr.Get)expr).name);
 			}
 			
 			error("Assignment error");
@@ -380,7 +398,6 @@ public class Parser {
 	}
 	private Expr instantiateCall() {
 		if(match(new Tokens[]{Tokens.EYUP})) {
-
 			List<Expr> arguments = new ArrayList<>();
 			Expr expr = group();
 			
@@ -399,7 +416,11 @@ public class Parser {
 		while(true) {
 			if (match(new Tokens[]{Tokens.L_PAREN})) {
 				expr = endCall(expr);
-			}else{
+			}else if (match(new Tokens[]{Tokens.PERIOD})) {
+				takeToken(Tokens.ID, "Expected name.");
+				String name = advanceValue();
+				expr = new Expr.Get(expr, name);
+			}else {
 				break;
 			}
 		}
@@ -435,7 +456,7 @@ public class Parser {
 	
 	
 	private Expr primary() {	
-	
+	//debug("primaryt");
 		if (match(new Tokens[]{Tokens.STRING})) {
 			String value = (String)advanceValue();
 			if(value.length() == 1) {
@@ -457,7 +478,7 @@ public class Parser {
 		if (match(new Tokens[]{Tokens.ID})) {
 			return new Expr.Var((String)advanceValue());
 			}
-		
+		//debug("primaryt");
 		throw error("primary");
 	}
 	public boolean match(Tokens[] tokens) {
@@ -513,6 +534,7 @@ public class Parser {
 	    core.Error.parseError(error);
 		return new RuntimeException();
 	}
+	@SuppressWarnings("unused")
 	private void debug(String function) {
 		System.out.println("Function: "+function);
 		System.out.println("Token: "+peek());

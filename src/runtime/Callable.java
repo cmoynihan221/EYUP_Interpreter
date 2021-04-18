@@ -4,7 +4,6 @@ import java.util.List;
 
 import ast.Interpreter;
 import enums.Tokens;
-import enums.Type;
 
 public interface Callable{
 	int arity();

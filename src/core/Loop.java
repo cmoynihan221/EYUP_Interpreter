@@ -5,8 +5,6 @@ import java.io.IOException;
 
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.List;
-
 import ast.Interpreter;
 import ast.Resolver;
 //import ast.NodePrintVisitor;
@@ -39,6 +37,7 @@ public class Loop {
 			String inputString;
 			try {	
 				lexer.OutputTuple lexed = new lexer.OutputTuple();		
+				System.out.print(">");
 				inputString = input.readLine();		
 				
 				//System.out.println(inputString);
@@ -53,6 +52,7 @@ public class Loop {
 							System.out.print("\t");
 						}
 						//System.out.print(callStack);
+						System.out.print(">");
 						inputString = input.readLine();		
 						lexedLine = l.lexString(inputString);						
 						lexed.tokens.addAll( lexedLine.tokens);

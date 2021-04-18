@@ -9,25 +9,22 @@ import enums.Type;
 
 public class EyupFunction implements Callable{
 	private Stmt.Function declaration;
-	private final RTEnvironment closure;
-	public EyupFunction(Stmt.Function dec,RTEnvironment closure) {
+	private final EyupBodger closure;
+	public EyupFunction(Stmt.Function dec,EyupBodger currentBodger) {
 		this.declaration = dec;
-		this.closure = closure;
+		this.closure = currentBodger;
 	}
 
 	@Override
 	public int arity() {
-		
 	Integer paramnum = 0;
 	if(declaration.params!=null) {
-	for (int i = 0; i<declaration.params.size();i++) {
-		for (int n = 0; n<declaration.params.get(i).size();n++) {
-			paramnum++;
+		for (int i = 0; i<declaration.params.size();i++) {
+			for (int n = 0; n<declaration.params.get(i).size();n++) {
+				paramnum++;
+			}
 		}
 	}
-	}
-	
-		
 		return paramnum;
 	}
 
@@ -38,22 +35,19 @@ public class EyupFunction implements Callable{
 
 	@Override
 	public Object call(Interpreter interpreter, List<Object> args) {
-		
-		RTEnvironment envi = new RTEnvironment(closure);
+		EyupBodger envi = new EyupBodger(closure);
 		Integer paramnum = 0;
 		if(declaration.params!=null) {
-		for (int i = 0; i<declaration.params.size();i++) {
-			for (int n = 0; n<declaration.params.get(i).size();n++) {
-				checkType(declaration.params.get(i).type, args.get(paramnum));
-				envi.define(declaration.params.get(i).params.get(paramnum), new EnvVar( args.get(paramnum),declaration.params.get(i).type));
-				paramnum++;
+			for (int i = 0; i<declaration.params.size();i++) {
+				for (int n = 0; n<declaration.params.get(i).size();n++) {
+					checkType(declaration.params.get(i).type, args.get(paramnum));
+					envi.globals.define(declaration.params.get(i).params.get(paramnum), new EnvVar( args.get(paramnum),declaration.params.get(i).type));
+					paramnum++;
+				}
 			}
-			
-			
-		}
 		}
 		try {
-			interpreter.runBlock(declaration.body, envi);
+			interpreter.runBlock(declaration.body.stmts, envi);
 		}catch(Return returnValue) {
 			return returnValue.value;
 		}
@@ -72,8 +66,10 @@ public class EyupFunction implements Callable{
 		case Char: return Tokens.LETTER;
 		case String: return Tokens.SCRIPT;
 		case Bool: return Tokens.ANSWER;
+		default:
+			throw new RuntimeException("Unknown Type");
 		}
-		throw new RuntimeException("Unknown Type");
+		
 	}
 	private Type checkType(Object value) {
 		if (value instanceof Integer) {

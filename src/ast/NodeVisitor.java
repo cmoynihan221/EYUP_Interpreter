@@ -26,5 +26,9 @@ public interface NodeVisitor {
 	public Object visitBlock(Block block);
 	public Object visitReturn(Return return1);
 	public Object visitBodger(Bodger bodger);
+	public Object visitGetExpr(Get get);
+	public Object visitEyup(EyupCall eyupCall);
+	public Object visitSithe(SitheCall sitheCall);
+	public Object visitMissenExpr(Missen missen);
 	
 }

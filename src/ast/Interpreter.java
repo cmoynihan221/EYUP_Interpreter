@@ -10,17 +10,20 @@ import ast.Expr.Binary;
 import ast.Expr.Call;
 import ast.Expr.Group;
 import ast.Expr.Logical;
+import ast.Expr.Missen;
 import ast.Expr.Primary;
 import ast.Expr.Unary;
 import ast.Expr.Var;
+import ast.Expr.Get;
 import ast.Stmt.Block;
 import ast.Stmt.Bodger;
 import ast.Stmt.DefVar;
 import ast.Stmt.Expression;
+import ast.Stmt.EyupCall;
 import ast.Stmt.ForgetVar;
-import ast.Stmt.If;
 import ast.Stmt.Print;
 import ast.Stmt.Return;
+import ast.Stmt.SitheCall;
 import ast.Stmt.When;
 import ast.Stmt.While;
 import ast.Stmt.Function;
@@ -36,17 +39,19 @@ import runtime.EyupInstance;
 import runtime.RTEnvironment;
 
 public class Interpreter implements NodeVisitor {
-	public final RTEnvironment globals = new RTEnvironment();
-	private RTEnvironment rt = globals;
-	private final Map<Expr, Integer> locals = new HashMap<>();
+	
+	
+	EyupBodger currentBodger;
+	
 	
 	public Interpreter() {
-		// TODO Auto-generated constructor stub
+		 this.currentBodger = new EyupBodger("Gaffer");
+		 
 	}
 	public void interpret(ArrayList<Stmt> statements) {
 		try {
 			for(Stmt stmt:statements) {
-				stmt.accept(this);
+				System.out.println(stmt.accept(this));
 			}
 		}catch(RuntimeException error) {
 			System.out.println(error);
@@ -107,23 +112,32 @@ public class Interpreter implements NodeVisitor {
 		case DOLLA:
 			checkStringOperands(expr.op,left,right);
 			return (String)left+(String)right;
+		default:
+			return null;
 		}
-		return null;
+		
 	}
+	@SuppressWarnings("unused")
 	private Boolean compareStrings(String left, String right, Tokens op) {
 		int comp = left.compareTo(right);
 		switch(comp) {
 		case -1: switch(op) {
 		case LESS:case LESS_EQ:return true;
 		case GREAT:case GREAT_EQ: return false;
+		default:
+			break;
 		}
 		case 0: switch(op) {
 		case GREAT_EQ:case LESS_EQ:return true;
 		case GREAT:case LESS: return false;
+		default:
+			break;
 		}
 		case 1: switch(op) {
 		case LESS:case LESS_EQ:return false;
 		case GREAT:case GREAT_EQ: return true;
+		default:
+			break;
 		}
 		default: throw error("Comparison error: "+left+" : "+right);
 		}
@@ -156,23 +170,25 @@ public class Interpreter implements NodeVisitor {
 			return -(Integer)right;
 		case EXCLAMATION:
 			return !isBool(right);
+		default:
+			return null;
 		}
-		return null;
+		
 	}
 
 	@Override
 	public Object visitExprStmt(Expression exprstmt) {
 		if(exprstmt.expr instanceof Expr.Var) {
-			Object value = rt.get(((Expr.Var)(exprstmt.expr)).name);
+			Object value = currentBodger.rt.get(((Expr.Var)(exprstmt.expr)).name);
 			if(value==null) {
 				value = "nowt";
 			}
-			System.out.println(value);
+			return value;
 		}
 				
-		exprstmt.expr.accept(this);
+		Object value = exprstmt.expr.accept(this);
 		
-		return null;
+		return value;
 	}
 
 	@Override
@@ -195,9 +211,10 @@ public class Interpreter implements NodeVisitor {
 				type = getType(value);
 			}
 			
-			rt.define(defVar.name, new EnvVar(value,type));	
-			System.out.println(defVar.name);
-			return null;
+			currentBodger.rt.define(defVar.name, new EnvVar(value,type));	
+			
+			
+			return currentBodger.name +"." +defVar.name;
 		}
 		else {
 			throw error("Variable definition inncorrect.");
@@ -206,7 +223,11 @@ public class Interpreter implements NodeVisitor {
 
 	@Override
 	public Object visitVarExpr(Var var) {
-		return lookUpVariable(var.name, var);
+		Object val = currentBodger.lookUpVariable(var.name, var);
+		if (val instanceof EnvVar) {
+			val = ((EnvVar)val).value;
+		}
+		return val;
 	}
 
 	@Override
@@ -220,15 +241,15 @@ public class Interpreter implements NodeVisitor {
 		}else {
 			type = getType(value);
 		}
-		rt.assign(assignment.name,new EnvVar(value, type));
-		System.out.println(value);
-		return null;
+		currentBodger.rt.assign(assignment.name,new EnvVar(value, type));
+		
+		return value;
 	}
 	@Override
 	public Object visitForgetVar(ForgetVar forgetVar) {
 		String name = forgetVar.name;
-		rt.remove(name);
-		return null;
+		currentBodger.rt.remove(name);
+		return name;
 	}
 	
 	
@@ -286,7 +307,6 @@ public class Interpreter implements NodeVisitor {
 		for (Expr arg : call.args) {
 			args.add(arg.accept(this));
 		}
-		//System.out.println(called.getClass());
 		
 		if(!(called instanceof Callable)) {
 			throw new RuntimeException("Can only call functions and bodgers");
@@ -304,24 +324,25 @@ public class Interpreter implements NodeVisitor {
 	}
 	@Override
 	public Object visitFunction(Function function) {
-		EyupFunction fun = new EyupFunction(function,rt);
-		rt.define(function.name, new EnvVar(fun, fun.type()));
-		return null;
+		EyupFunction fun = new EyupFunction(function,currentBodger);
+		currentBodger.rt.define(function.name, new EnvVar(fun, fun.type()));
+		return currentBodger.name +"." +function.name;
 	}
 	@Override
 	public Object visitBlock(Block block) {
-		runBlock(block.stmts, new RTEnvironment(rt));
+		runBlock(block.stmts, new EyupBodger(currentBodger));
 		return null;
 	}
-	public void runBlock(List<Stmt> stmts, RTEnvironment rt) {
-		RTEnvironment previous = this.rt;
+	
+	public void runBlock(List<Stmt> stmts, EyupBodger funcBodge) {
+		EyupBodger previous = currentBodger;
 		try {
-			this.rt = rt;
+			currentBodger = funcBodge;
 			for(Stmt stmt:stmts) {
 				stmt.accept(this);
 			}
 		}finally {
-			this.rt = previous;
+			currentBodger = previous;
 		}
 		
 		
@@ -378,6 +399,7 @@ public class Interpreter implements NodeVisitor {
 		throw error("Unknown Type");
 	}
 	//Method to validate input to binary operators
+	@SuppressWarnings("unused")
 	private Boolean validate(Object left, Object right, Tokens op) {
 		return null;
 	}
@@ -394,46 +416,126 @@ public class Interpreter implements NodeVisitor {
 		throw error("Unknown Type");
 	}
 	public void resolve(Expr expr, int depth) {
-		locals.put(expr,depth);
-	}
-	private Object lookUpVariable(String name, Expr expr) {
-		Integer dist = locals.get(expr);
-		if(dist != null) {
-			return rt.getAt(dist, name);
-		}else {
-			return globals.get(name);
+		currentBodger.locals.put(expr,depth);
+		EyupBodger parent = currentBodger.parent;
+		while (parent != null) {
+			parent.locals.put(expr,depth);
+			parent = parent.parent;
 		}
 	}
+	
 	
 	public static void main(String[] args) {
 		Parser p = new Parser();
 		Lexer l = new Lexer();
 		Interpreter i = new Interpreter();
-		lexer.OutputTuple lexed = l.lexString("bodger circle");
+		lexer.OutputTuple lexed;
+		Resolver resolver = new Resolver(i);
+		lexed = l.lexString("bodger car");
 		lexed.tokens.add(Tokens.EOI);
-		i.interpret(p.parseInput(lexed));
-		lexed = l.lexString("summat x := eyup circle()");
-		lexed.tokens.add(Tokens.EOI);
-		i.interpret(p.parseInput(lexed));
-		//lexed = l.lexString("x := sqr(\"Hello\")");
-		//exed.tokens.add(Tokens.EOI);
-		//i.interpret(p.parseInput(lexed));
+		ArrayList<Stmt> stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
 		
-		//lexed = l.lexString("");
-		//lexed.tokens.add(Tokens.EOI);
-		//i.interpret(p.parseInput(lexed));
-			
+		lexed = l.lexString("eyup car");
+		lexed.tokens.add(Tokens.EOI);
+		stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
+		
+		lexed = l.lexString("summat wheel := 0 ");
+		lexed.tokens.add(Tokens.EOI);
+		stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
+		
+		lexed = l.lexString("fettle changeWheel(p :Number) :Number giz wheel := p changeWheel := wheel oer ");
+		lexed.tokens.add(Tokens.EOI);
+		stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
+		
+		lexed = l.lexString("sithee");
+		lexed.tokens.add(Tokens.EOI);
+		stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
+		
+		lexed = l.lexString("summat polo := eyup car");
+		lexed.tokens.add(Tokens.EOI);
+		stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
+		
+		lexed = l.lexString("polo.wheel");
+		lexed.tokens.add(Tokens.EOI);
+		stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
+		
+		lexed = l.lexString("polo.changeWheel(2)");
+		lexed.tokens.add(Tokens.EOI);
+		stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
+		
+		lexed = l.lexString("polo.wheel");
+		lexed.tokens.add(Tokens.EOI);
+		stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
+		
+		
+		
 	}
 	@Override
 	public Object visitBodger(Bodger bodger) {
-		
-		rt.define(bodger.name, new EnvVar(null, Tokens.BODGER));
-		
+		currentBodger.rt.define(bodger.name, new EnvVar(null, Tokens.BODGER));
 		EyupBodger bodg = new EyupBodger(bodger.name);
+		currentBodger.rt.assign(bodger.name, new EnvVar(bodg, Tokens.BODGER));
 		
-		rt.assign(bodger.name, new EnvVar(bodg, Tokens.BODGER));
+		return currentBodger.name +": " +bodger.name;
+	}
+	@Override
+	//Might need to adapt for static versions
+	public Object visitGetExpr(Get get) {
+		Object object = get.object.accept(this);
+		if(object instanceof EyupInstance) {
+			return ((EyupInstance) object).get(get.name,get); 
+		}
+		throw error(get.name+ " only instances have properties");
 		
+	}
+	@Override
+	public Object visitEyup(EyupCall eyupCall) {
+		Object newBodger = currentBodger.rt.get(eyupCall.name); 
+		if(newBodger instanceof EyupBodger) {
+			EyupBodger bodge = (EyupBodger)newBodger;
+			bodge.parent = currentBodger;
+			this.currentBodger = bodge;
+			return bodge.name+": "+"eyup";
+		}
+		
+		throw error("not a bodger");
+		
+	}
+	@Override
+	public Object visitSithe(SitheCall sitheCall) {
+		EyupBodger curBodge = currentBodger.parent;
+		if(curBodge == null) {
+			System.out.print("END PROG");
+		}
+		else {
+			String name = currentBodger.name;
+			this.currentBodger = curBodge;
+			return name+": sithee";
+		}
 		return null;
+	}
+	@Override
+	public Object visitMissenExpr(Missen missen) {
+		return currentBodger.lookUpVariable("this",missen );
+		
 	}
 	 
 

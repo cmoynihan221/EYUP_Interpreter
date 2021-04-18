@@ -9,23 +9,28 @@ import ast.Expr.Binary;
 import ast.Expr.Call;
 import ast.Expr.Group;
 import ast.Expr.Logical;
+import ast.Expr.Missen;
 import ast.Expr.Primary;
 import ast.Expr.Unary;
 import ast.Expr.Var;
+import ast.Expr.Get;
 import ast.Stmt.Block;
 import ast.Stmt.Bodger;
 import ast.Stmt.DefVar;
 import ast.Stmt.Expression;
+import ast.Stmt.EyupCall;
 import ast.Stmt.ForgetVar;
 import ast.Stmt.Function;
 import ast.Stmt.If;
 import ast.Stmt.Print;
 import ast.Stmt.Return;
+import ast.Stmt.SitheCall;
 import ast.Stmt.When;
 import ast.Stmt.While;
 import enums.Tokens;
 import parser.FParam;
 
+@SuppressWarnings("unused")
 public class Resolver implements NodeVisitor {
 	private final Interpreter interpreter;
 	  private final Stack<Map<String, Boolean>> scopes = new Stack<>();
@@ -185,12 +190,16 @@ public class Resolver implements NodeVisitor {
 	}
 	private void resolveFunction(Stmt.Function function) {
 		beginScope();
+		if(function.params !=null) {
 		for(FParam paraType: function.params) {
 			for(String para:paraType.params ) {
 				declare(para);
 				define(para);
 			}
 			resolve(function.body);
+			endScope();
+		}}
+		else {
 			endScope();
 		}
 	}
@@ -217,6 +226,34 @@ public class Resolver implements NodeVisitor {
 	public Object visitBodger(Bodger bodger) {
 		declare(bodger.name);
 		define(bodger.name);
+		//beginScope();
+		//scopes.peek().put("this", true);
+		//endScope();
+		
+		return null;
+	}
+
+	@Override
+	public Object visitGetExpr(Get get) {
+		resolve(get.object);
+		return null;
+	}
+
+	@Override
+	public Object visitEyup(EyupCall eyupCall) {
+		
+		return null;
+	}
+
+	@Override
+	public Object visitSithe(SitheCall sitheCall) {
+		
+		return null;
+	}
+
+	@Override
+	public Object visitMissenExpr(Missen missen) {
+		resolveLocal(missen, "this");
 		return null;
 	}
 

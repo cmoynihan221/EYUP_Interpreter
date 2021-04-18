@@ -3,8 +3,6 @@ package runtime;
 import java.util.HashMap;
 import java.util.Map;
 
-import ast.Expr;
-
 
 
 public class RTEnvironment {
@@ -32,14 +30,10 @@ public class RTEnvironment {
 		return new RuntimeException();
 	}
 	public void assign(String name, EnvVar value) {
-		
-		if(values.containsKey(name)) {
-			
+		if(values.containsKey(name)) {	
 			EnvVar stored = values.get(name);
 			if(checkType(value,stored)) {
-			
 				values.put(name, value);
-				
 				return;
 			}
 			throw error("Vexed: "+ name + " wi' bad'un "+ value.value+":"+value.type);
@@ -47,7 +41,7 @@ public class RTEnvironment {
 		}
 		if (enclosed != null) {
 			enclosed.assign(name,value);
-			System.out.println("Debug3");
+			
 			return;
 		}
 		throw error("Flummoxed: weerz "+name+"?");

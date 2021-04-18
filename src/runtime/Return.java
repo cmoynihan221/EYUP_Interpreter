@@ -1,5 +1,6 @@
 package runtime;
 
+@SuppressWarnings("serial")
 public class Return extends RuntimeException{
 	final Object value;
 	public Return(Object value) {

@@ -130,6 +130,32 @@ public interface Expr {
 	    final List<Expr> args;
 	   
 	 }
+	 class Get implements Expr{
+		 public Get(Expr object, String name) {
+		      this.object = object;
+		      this.name = name;
+		      
+		    }
+		//accept method redirects to visitor 
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			 return visitor.visitGetExpr(this);
+		}
+	    final Expr object;
+	    public final String name;
+	   
+	 }
+	 class Missen implements Expr{
+		 public Missen() {
+		      
+		    }
+		//accept method redirects to visitor 
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			 return visitor.visitMissenExpr(this);
+		}
+	   
+	 }
 
 	
 	

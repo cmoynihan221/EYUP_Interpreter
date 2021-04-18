@@ -100,12 +100,12 @@ public interface Stmt {
 	class Function implements Stmt{
 		String name;
 		public List<FParam> params;
-		public List<Stmt> body;
+		public Block body;
 		public Tokens type;
 		public Function(String name, List<FParam> params, List<Stmt> body, Tokens type) {
 			this.name = name;
 			this.params = params;
-			this.body = body; 
+			this.body = new Block(body); 
 			this.type = type;
 		}
 		@Override
@@ -114,7 +114,7 @@ public interface Stmt {
 		}
 	}
 	class Block implements Stmt{
-		List<Stmt> stmts;
+		public List<Stmt> stmts;
 		public Block(List<Stmt> stmts) {
 			this.stmts = stmts; 
 		}
@@ -133,6 +133,28 @@ public interface Stmt {
 			return visitor.visitReturn(this);
 		}
 	}
+	class EyupCall implements Stmt{
+		String name;
+		public EyupCall(String name) {
+			this.name = name;
+		}
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			return visitor.visitEyup(this);
+		}
+	}
+	class SitheCall implements Stmt{
+		
+		public SitheCall() {
+			
+		}
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			return visitor.visitSithe(this);
+		}
+	}
+	
+	
 	class Bodger implements Stmt{
 		String name;
 		public Bodger(String name) {
@@ -144,6 +166,7 @@ public interface Stmt {
 			return visitor.visitBodger(this);
 		}
 	}
+	
 	
 }
 

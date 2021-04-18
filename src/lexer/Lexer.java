@@ -37,6 +37,7 @@ public class Lexer {
 		keywords.put("giz", Tokens.GIZ);
 		keywords.put("fettle", Tokens.FETTLE);
 		keywords.put("bodger", Tokens.BODGER);
+		keywords.put("Bodger", Tokens.BODGER);
 		keywords.put("gioer", Tokens.GIVEOVER);
 		keywords.put("oer", Tokens.OVER);
 		keywords.put("nowt", Tokens.NONE);
@@ -62,6 +63,9 @@ public class Lexer {
 		keywords.put("Letter", Tokens.LETTER);
 		keywords.put("Script", Tokens.SCRIPT);
 		keywords.put("Answer", Tokens.ANSWER);
+		keywords.put("sithee", Tokens.SITHE);
+		keywords.put("sithi", Tokens.SITHE);
+		keywords.put("missen", Tokens.MISSEN);
 		
 		special.put(".", Tokens.PERIOD);
 		special.put("(", Tokens.L_PAREN);
@@ -332,6 +336,7 @@ public class Lexer {
 		
 		
 	
+	@SuppressWarnings("resource")
 	public static void main(String[] args) {
 		Lexer l = new Lexer();
 		Scanner myObj = new Scanner(System.in);
