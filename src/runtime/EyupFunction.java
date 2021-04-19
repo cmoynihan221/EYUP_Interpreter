@@ -89,4 +89,10 @@ public class EyupFunction implements Callable{
 		}
 		throw new RuntimeException("Unknown Type");
 	}
+
+	public EyupFunction bind(EyupInstance instance) {
+		EyupBodger envi = 	new EyupBodger(closure);
+		envi.globals.define("this", new EnvVar(instance, Tokens.BODGER));
+		return new EyupFunction(declaration, envi);		
+	}
 }

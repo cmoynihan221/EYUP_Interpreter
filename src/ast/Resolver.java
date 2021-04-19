@@ -226,9 +226,9 @@ public class Resolver implements NodeVisitor {
 	public Object visitBodger(Bodger bodger) {
 		declare(bodger.name);
 		define(bodger.name);
-		//beginScope();
-		//scopes.peek().put("this", true);
-		//endScope();
+		beginScope();
+		scopes.peek().put("this", true);
+		endScope();
 		
 		return null;
 	}

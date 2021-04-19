@@ -449,7 +449,7 @@ public class Interpreter implements NodeVisitor {
 		resolver.resolve(stmts);
 		i.interpret(stmts);
 		
-		lexed = l.lexString("fettle changeWheel(p :Number) :Number giz wheel := p changeWheel := wheel oer ");
+		lexed = l.lexString("fettle changeWheel(p :Number) :Number giz wheel := p changeWheel := missen oer ");
 		lexed.tokens.add(Tokens.EOI);
 		stmts = p.parseInput(lexed);
 		resolver.resolve(stmts);
@@ -473,7 +473,7 @@ public class Interpreter implements NodeVisitor {
 		resolver.resolve(stmts);
 		i.interpret(stmts);
 		
-		lexed = l.lexString("polo.changeWheel(2)");
+		lexed = l.lexString("polo.changeWheel(2).changeWheel(3)");
 		lexed.tokens.add(Tokens.EOI);
 		stmts = p.parseInput(lexed);
 		resolver.resolve(stmts);
@@ -534,7 +534,7 @@ public class Interpreter implements NodeVisitor {
 	}
 	@Override
 	public Object visitMissenExpr(Missen missen) {
-		return currentBodger.lookUpVariable("this",missen );
+		return currentBodger.lookUpVariable("this",missen);
 		
 	}
 	 

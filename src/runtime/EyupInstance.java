@@ -19,8 +19,12 @@ public class EyupInstance {
 	public Object get(String name, Get get) {
 		Object var = bodger.lookUpVariable(name, get);
 		if (var != null ) {
+			if(var instanceof EyupFunction) {
+				((EyupFunction)var).bind(this);
+			}
 			return var;
 		}
+		
 		throw new RuntimeException("Undefined property " + name);
 	}
 

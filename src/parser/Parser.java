@@ -478,6 +478,9 @@ public class Parser {
 		if (match(new Tokens[]{Tokens.ID})) {
 			return new Expr.Var((String)advanceValue());
 			}
+		if (match(new Tokens[]{Tokens.MISSEN})) {
+			return new Expr.Missen();
+			}
 		//debug("primaryt");
 		throw error("primary");
 	}
