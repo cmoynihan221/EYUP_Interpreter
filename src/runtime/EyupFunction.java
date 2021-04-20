@@ -51,7 +51,7 @@ public class EyupFunction implements Callable{
 		}catch(Return returnValue) {
 			return returnValue.value;
 		}
-		return null;
+		return "nowt";
 		
 	}
 

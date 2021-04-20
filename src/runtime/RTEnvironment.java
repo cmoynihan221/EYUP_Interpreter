@@ -1,7 +1,9 @@
 package runtime;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 
 
@@ -74,5 +76,12 @@ public class RTEnvironment {
 			env = env.enclosed;
 		}
 		return env;
+	}
+	public Set<String> getValues() {
+		return values.keySet();
+	}
+	public boolean notEmpty() {
+		
+		return !values.isEmpty();
 	}
 }

@@ -30,5 +30,6 @@ public interface NodeVisitor {
 	public Object visitEyup(EyupCall eyupCall);
 	public Object visitSithe(SitheCall sitheCall);
 	public Object visitMissenExpr(Missen missen);
+	public Object visitGander(Gander gander);
 	
 }

@@ -2,8 +2,10 @@ package ast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import ast.Expr.Assignment;
 import ast.Expr.Binary;
@@ -27,6 +29,7 @@ import ast.Stmt.SitheCall;
 import ast.Stmt.When;
 import ast.Stmt.While;
 import ast.Stmt.Function;
+import ast.Stmt.Gander;
 import enums.Tokens;
 import enums.Type;
 import lexer.Lexer;
@@ -41,7 +44,7 @@ import runtime.RTEnvironment;
 public class Interpreter implements NodeVisitor {
 	
 	
-	EyupBodger currentBodger;
+	public EyupBodger currentBodger;
 	
 	
 	public Interpreter() {
@@ -195,7 +198,7 @@ public class Interpreter implements NodeVisitor {
 	public Object visitPrintStmt(Print stmt) {
 		Object value = stmt.expr.accept(this);
 	    System.out.println(toString(value));
-	    return null;
+	    return toString(value);
 		
 	}
 
@@ -232,7 +235,6 @@ public class Interpreter implements NodeVisitor {
 
 	@Override
 	public Object visitAssignmentExpr(Assignment assignment) {
-		//System.out.print("debug");
 		Object value  = assignment.value.accept(this);
 		Tokens type = Tokens.NONE;
 		//needs to check type of variable
@@ -261,7 +263,7 @@ public class Interpreter implements NodeVisitor {
 		else if(if1.elseStmt != null) {
 			if1.elseStmt.accept(this);
 		}
-		return null;
+		return "nowt";
 	}
 	@Override
 	public Object visitLogicExpr(Logical logical) {
@@ -287,18 +289,30 @@ public class Interpreter implements NodeVisitor {
 		}if (when.elseStmt != null) {
 			when.elseStmt.accept(this);
 		}
-		return null;
+		return "nowt";
 	}
 	@Override
 	public Object visitWhile(While while1) {
 		Object condition = while1.condition.accept(this);
-		while(isBool(condition)) {
-			for(int i=0;i<while1.body.size();i++) {
-				while1.body.get(i).accept(this);
-			}
-			condition = while1.condition.accept(this);
+		switch(while1.form) {
+			case 0: 
+				while(isBool(condition)) {
+					for(int i=0;i<while1.body.size();i++) {
+						while1.body.get(i).accept(this);
+					}
+					condition = while1.condition.accept(this);
+				}
+				break;
+			case 1:
+				do {
+					for(int i=0;i<while1.body.size();i++) {
+						while1.body.get(i).accept(this);
+					}
+					condition = while1.condition.accept(this);
+				}while(isBool(condition));
+				break;
 		}
-		return null;
+		return "nowt";
 	}
 	@Override
 	public Object visitCallExpr(Call call) {
@@ -431,59 +445,25 @@ public class Interpreter implements NodeVisitor {
 		Interpreter i = new Interpreter();
 		lexer.OutputTuple lexed;
 		Resolver resolver = new Resolver(i);
-		lexed = l.lexString("bodger car");
+		lexed = l.lexString("fettle add(n:Number) giz add:=n+n oer");
 		lexed.tokens.add(Tokens.EOI);
 		ArrayList<Stmt> stmts = p.parseInput(lexed);
 		resolver.resolve(stmts);
 		i.interpret(stmts);
 		
-		lexed = l.lexString("eyup car");
+		lexed = l.lexString("add(2)");
 		lexed.tokens.add(Tokens.EOI);
 		stmts = p.parseInput(lexed);
 		resolver.resolve(stmts);
 		i.interpret(stmts);
 		
-		lexed = l.lexString("summat wheel := 0 ");
+		lexed = l.lexString("gander");
 		lexed.tokens.add(Tokens.EOI);
 		stmts = p.parseInput(lexed);
 		resolver.resolve(stmts);
 		i.interpret(stmts);
 		
-		lexed = l.lexString("fettle changeWheel(p :Number) :Number giz wheel := p changeWheel := missen oer ");
-		lexed.tokens.add(Tokens.EOI);
-		stmts = p.parseInput(lexed);
-		resolver.resolve(stmts);
-		i.interpret(stmts);
 		
-		lexed = l.lexString("sithee");
-		lexed.tokens.add(Tokens.EOI);
-		stmts = p.parseInput(lexed);
-		resolver.resolve(stmts);
-		i.interpret(stmts);
-		
-		lexed = l.lexString("summat polo := eyup car");
-		lexed.tokens.add(Tokens.EOI);
-		stmts = p.parseInput(lexed);
-		resolver.resolve(stmts);
-		i.interpret(stmts);
-		
-		lexed = l.lexString("polo.wheel");
-		lexed.tokens.add(Tokens.EOI);
-		stmts = p.parseInput(lexed);
-		resolver.resolve(stmts);
-		i.interpret(stmts);
-		
-		lexed = l.lexString("polo.changeWheel(2).changeWheel(3)");
-		lexed.tokens.add(Tokens.EOI);
-		stmts = p.parseInput(lexed);
-		resolver.resolve(stmts);
-		i.interpret(stmts);
-		
-		lexed = l.lexString("polo.wheel");
-		lexed.tokens.add(Tokens.EOI);
-		stmts = p.parseInput(lexed);
-		resolver.resolve(stmts);
-		i.interpret(stmts);
 		
 		
 		
@@ -536,6 +516,23 @@ public class Interpreter implements NodeVisitor {
 	public Object visitMissenExpr(Missen missen) {
 		return currentBodger.lookUpVariable("this",missen);
 		
+	}
+	@Override
+	public Object visitGander(Gander gander) {
+		String output = "nowt";
+		if (currentBodger.globals.notEmpty()) {
+			Iterator values = currentBodger.globals.getValues().iterator();
+			output = "";
+			while(values.hasNext()) {
+				output = output + currentBodger.name+"."+values.next();
+				if(values.hasNext()) {
+					output = output + "\n";
+				}
+			}
+			
+		}
+		
+		return output;
 	}
 	 
 

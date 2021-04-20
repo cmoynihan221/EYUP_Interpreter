@@ -21,6 +21,7 @@ import ast.Stmt.Expression;
 import ast.Stmt.EyupCall;
 import ast.Stmt.ForgetVar;
 import ast.Stmt.Function;
+import ast.Stmt.Gander;
 import ast.Stmt.If;
 import ast.Stmt.Print;
 import ast.Stmt.Return;
@@ -254,6 +255,12 @@ public class Resolver implements NodeVisitor {
 	@Override
 	public Object visitMissenExpr(Missen missen) {
 		resolveLocal(missen, "this");
+		return null;
+	}
+
+	@Override
+	public Object visitGander(Gander gander) {
+		
 		return null;
 	}
 

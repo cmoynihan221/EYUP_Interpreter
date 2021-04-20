@@ -8,30 +8,46 @@ import lexer.Lexer;
 import lexer.OutputTuple;
 import ast.*;
 import ast.Stmt;
+import core.Loop;
 
 
 public class Parser {
+	int spaceStack = 0;
 	int current ; 
 	int currentValue; 
 	OutputTuple input;
 	String currentFunction = null;
 	
+	private String spaces() {
+		String returnString = "";
+		for(int i=0; i<spaceStack;i++) {
+			returnString = returnString + "  ";
+		}
+		return returnString;
+	}
 	
+	private void requestInput() {
+		if(isAtEnd()) {
+			OutputTuple newInput = Loop.getInput(spaces());
+			input.tokens.addAll(newInput.tokens);
+			input.tokenValues.addAll(newInput.tokenValues);
+			current++;
+		}
+	}
 	
 	public ArrayList<Stmt> parseInput(OutputTuple output) {
 		ArrayList<Stmt> parsedStatements = new ArrayList<>();
 		input = output;
 		current = 0; 
-		currentValue = 0; 
-		
+		currentValue = 0; 	
+		spaceStack = 0;
 		try {
 			while (!isAtEnd()) {
 				parsedStatements.add(definition());
 			}
-			return parsedStatements;
-			
+			return parsedStatements;			
 		} catch(RuntimeException error) {
-			
+			spaceStack = 0;
 			return parsedStatements;
 			
 		}
@@ -42,7 +58,7 @@ public class Parser {
 		Tokens[] fettle = {Tokens.FETTLE};
 		Tokens[] bodger = {Tokens.BODGER};
 		try {
-			if(match(fettle))return function("function");
+			if(match(fettle)) { this.spaceStack ++;return function("function"); }
 			if(match(summat)) return varDef();
 			if(match(bodger)) return classDef();
 			return statement();
@@ -114,6 +130,7 @@ public class Parser {
 		}
 		List<Stmt>  body = null;
 		if(match(new Tokens[] {Tokens.GIZ})) {
+			requestInput();
 			body = block();
 		}
 		else if(match(new Tokens[] {Tokens.GIVEOVER})) {
@@ -126,13 +143,21 @@ public class Parser {
 	}
 	private List<Stmt> block(){
 		List<Stmt> statements = new ArrayList<>();
-		
 	    while (!check(Tokens.OVER) && !isAtEnd()) {
-	    	
 	      statements.add(definition());
+	      requestInput();
+	    } 
+	    takeToken(Tokens.OVER, "Expect 'oer' after block.");	 
+	    this.spaceStack --;
+	    return statements;
+	}
+	private List<Stmt> gowonBlock(){
+		List<Stmt> statements = new ArrayList<>();	
+	    while (!check(Tokens.WHILE) && !isAtEnd()) {
+	      statements.add(definition());
+	      requestInput();
 	    }
-	    
-	    takeToken(Tokens.OVER, "Expect 'oer' after block.");
+	    takeToken(Tokens.WHILE, "Expect 'WHILE' after block.");
 	    
 	    return statements;
 	}
@@ -183,15 +208,19 @@ public class Parser {
 			return forgetStmt();
 		}
 		if(match(new Tokens[]{Tokens.IF})) {
+			this.spaceStack ++;
 			return ifStatement();
 		}
 		if(match(new Tokens[]{Tokens.WHEN})) {
+			this.spaceStack ++;
 			return whenStatement();
 		}
 		if(match(new Tokens[]{Tokens.WHILE})) {
+			this.spaceStack ++;
 			return whileStatement();
 		}
 		if(match(new Tokens[]{Tokens.GOWON})) {
+			this.spaceStack ++;
 			return gowanStatement();
 		}
 		if(match(new Tokens[] {Tokens.EYUP})) {
@@ -200,11 +229,18 @@ public class Parser {
 		if(match(new Tokens[] {Tokens.SITHE})) {
 			return sitheStmt();
 		}
+		if(match(new Tokens[] {Tokens.GANDER})) {
+			return ganderStmt();
+		}
 		
 		return exprStmt();
 		
 	}
 	
+	private Stmt ganderStmt() {
+		return new Stmt.Gander();
+	}
+
 	private Stmt sitheStmt() {
 		return new Stmt.SitheCall();
 			
@@ -218,7 +254,7 @@ public class Parser {
 	}
 	private Stmt returnStmt() {
 		
-		String name = advanceValue(); 
+		advanceValue(); 
 		Expr value = null;
 		takeToken(Tokens.COLON_EQ, "Expect  ':=' for return");
 		
@@ -252,45 +288,64 @@ public class Parser {
 	
 	private Stmt ifStatement() {
 		Expr condition = expression();
+		requestInput();
 		takeToken(Tokens.THEN,"Ey up! Was expecting 'then'");
 		Stmt branch1 = statement();
+		requestInput();
 		Stmt branch2 = null;
 		if(match(new Tokens[]{Tokens.ELSE})) {
 			branch2 = statement();
+			requestInput();
 		}
+		this.spaceStack --;
 		takeToken(Tokens.OVER,"Ey up! Was expecting 'oer'");
+		
 		return new Stmt.If(condition, branch1, branch2);
 	}
 	private Stmt whenStatement() {
 		List<Expr> conditions = new ArrayList<>();
 		List<Stmt> branches= new ArrayList<>();
 		conditions.add(expression());
+		requestInput();
 		takeToken(Tokens.THEN,"Ey up! Was expecting 'then'");
 		branches.add(statement());
+		requestInput();
 		while(match(new Tokens[]{Tokens.WHEN})) {
 			conditions.add(expression());
+			requestInput();
 			takeToken(Tokens.THEN,"Ey up! Was expecting 'then'");
 			branches.add(statement());
+			requestInput();
 		}
 		Stmt branch2 = null;
 		if(match(new Tokens[]{Tokens.ELSE})) {
 			branch2 = statement();
+			requestInput();
 		}
 		takeToken(Tokens.OVER,"Ey up! Was expecting 'oer'");
+		this.spaceStack --;
 		return new Stmt.When(conditions, branches, branch2);
 		
 	}
 	private Stmt whileStatement() {
 		Expr condition = expression();
+		requestInput();
 		List<Stmt> statements = new ArrayList<>();
 		takeToken(Tokens.GOWON,"Ey up! Was expecting 'gowon'");
+		requestInput();
 		statements = block();
-		//takeToken(Tokens.OVER,"Ey up! Was expecting 'oer'");
-		return new Stmt.While(condition, statements);
+		return new Stmt.While(condition, statements, 0);
 	}
 	
 	private Stmt gowanStatement() {
-		return null;
+		requestInput();
+		List<Stmt> statements = new ArrayList<>();
+		statements = gowonBlock();
+		Expr condition = expression();
+		requestInput();
+		takeToken(Tokens.OVER,"Ey up! Was expecting 'oer'");
+		this.spaceStack --;
+		return new Stmt.While(condition, statements, 1);
 	}
 	
 	private Expr expression() {
@@ -456,7 +511,6 @@ public class Parser {
 	
 	
 	private Expr primary() {	
-	//debug("primaryt");
 		if (match(new Tokens[]{Tokens.STRING})) {
 			String value = (String)advanceValue();
 			if(value.length() == 1) {
@@ -481,7 +535,6 @@ public class Parser {
 		if (match(new Tokens[]{Tokens.MISSEN})) {
 			return new Expr.Missen();
 			}
-		//debug("primaryt");
 		throw error("primary");
 	}
 	public boolean match(Tokens[] tokens) {

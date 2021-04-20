@@ -7,6 +7,16 @@ import parser.FParam;
 
 public interface Stmt {
 	
+	public class Gander implements Stmt {
+		
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			return visitor.visitGander(this);
+		}
+
+	}
+
+
 	public Object accept(NodeVisitor visitor);
 	
 	class Expression implements Stmt {
@@ -85,10 +95,12 @@ public interface Stmt {
 	class While implements Stmt{
 		Expr condition;
 		List<Stmt> body;
+		int form;
 		
-		public While(Expr condition, List<Stmt> body) {
+		public While(Expr condition, List<Stmt> body, int i) {
 			this.condition = condition;
 			this.body=body;
+			form = i;
 		}
 		@Override
 		public Object accept(NodeVisitor visitor) {

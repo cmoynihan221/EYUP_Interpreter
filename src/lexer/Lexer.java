@@ -6,7 +6,7 @@ import enums.Tokens;
 public class Lexer {
 	ArrayList<String> lower_alpha = new ArrayList<String>(Arrays.asList("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"));
 	ArrayList<String> upper_alpha = new ArrayList<String>(Arrays.asList("A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"));
-	ArrayList<String> symbols = new ArrayList<String>(Arrays.asList("(" ,")" ,"[" ,"]" ,"\"" ,"+" ,"-" ,"=" ,":" ,"*" ,"/" ,"%" ,"$" ,"<" ,">","!","{","}"));
+	ArrayList<String> symbols = new ArrayList<String>(Arrays.asList("(" ,")" ,"[" ,"]" ,"\"" ,"+" ,"-" ,"=" ,":" ,"*" ,"/" ,"%" ,"$" ,"<" ,">","!","{","}",","));
 	ArrayList<String> non_zero = new ArrayList<String>(Arrays.asList("1","2","3","4","5","6","7","8","9"));
 	ArrayList<String> whitespace = new ArrayList<String>(Arrays.asList(" ", "\t", "\n"));
 	
@@ -104,12 +104,16 @@ public class Lexer {
 	}
 	
 	public OutputTuple lexString(String input) {
-		this.input = input;
-		current_pointer = 0;
-		output = new OutputTuple();
-		newToken();
-		
-		return output;
+		if(!input.equals("")) {
+			this.input = input;
+			current_pointer = 0;
+			output = new OutputTuple();
+			newToken();
+			return output;
+			}
+		else {
+			throw new RuntimeException();
+		}
 	}
 	
 	
@@ -339,13 +343,13 @@ public class Lexer {
 	@SuppressWarnings("resource")
 	public static void main(String[] args) {
 		Lexer l = new Lexer();
-		Scanner myObj = new Scanner(System.in);
-		while(true) {
-		OutputTuple s = l.lexString(myObj.nextLine());
+		
+		
+		OutputTuple s = l.lexString("fettle w(n1,n:Number):Number giz");
 		if (s != null) {
 			System.out.println(s.toString());	
 			}
-		}
+		
 		//myObj.close();
 		
 		
