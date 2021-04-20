@@ -31,5 +31,6 @@ public interface NodeVisitor {
 	public Object visitSithe(SitheCall sitheCall);
 	public Object visitMissenExpr(Missen missen);
 	public Object visitGander(Gander gander);
+	public Object visitRead(Read read);
 	
 }

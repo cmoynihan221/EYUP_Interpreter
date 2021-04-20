@@ -7,6 +7,18 @@ import parser.FParam;
 
 public interface Stmt {
 	
+	public class Read implements Stmt {
+		final String var;
+		public Read(String var) {
+			this.var = var;
+		}
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			return visitor.visitRead(this);
+		}
+
+	}
+
 	public class Gander implements Stmt {
 		
 		@Override
@@ -30,13 +42,15 @@ public interface Stmt {
 	}
 	
 	class Print implements Stmt {
-		public Print(Expr expr) {
+		public Print(Expr expr, int i) {
 			this.expr = expr;
+			this.type = i;
 		}
 		public Object accept(NodeVisitor visitor) {
 			return visitor.visitPrintStmt(this);
 		}
-		final Expr expr;		
+		final Expr expr;	
+		final int type;
 	}
 	//DEF VAR name(string), type(tokens), value(expr)
 	//Parser works out var type if not implicitly defined

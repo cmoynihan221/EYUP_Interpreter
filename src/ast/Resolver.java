@@ -24,6 +24,7 @@ import ast.Stmt.Function;
 import ast.Stmt.Gander;
 import ast.Stmt.If;
 import ast.Stmt.Print;
+import ast.Stmt.Read;
 import ast.Stmt.Return;
 import ast.Stmt.SitheCall;
 import ast.Stmt.When;
@@ -260,6 +261,12 @@ public class Resolver implements NodeVisitor {
 
 	@Override
 	public Object visitGander(Gander gander) {
+		
+		return null;
+	}
+
+	@Override
+	public Object visitRead(Read read) {
 		
 		return null;
 	}

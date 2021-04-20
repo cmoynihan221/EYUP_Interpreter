@@ -202,7 +202,13 @@ public class Parser {
 			}
 		}
 		if (match(new Tokens[]{Tokens.WRITE})) {
-			return printStmt();
+			return printStmt(0);
+		}
+		if(match(new Tokens[]{Tokens.PROMPT})) {
+			return printStmt(1);
+		}
+		if(match(new Tokens[]{Tokens.READ})) {
+			return readStmt();
 		}
 		if(match(new Tokens[]{Tokens.FORGET})) {
 			return forgetStmt();
@@ -237,6 +243,17 @@ public class Parser {
 		
 	}
 	
+	private Stmt readStmt() {
+		takeToken(Tokens.L_PAREN,"Ey up! Was expecting '('");
+		if(match(new Tokens[] {Tokens.ID})) {
+			String name = advanceValue(); 
+			takeToken(Tokens.R_PAREN,"Ey up! Was expecting ')'");
+			return new Stmt.Read(name);
+		}
+		throw error("Flummoxed: ain't a name?");
+		
+	}
+
 	private Stmt ganderStmt() {
 		return new Stmt.Gander();
 	}
@@ -250,7 +267,7 @@ public class Parser {
 		if(match(new Tokens[] {Tokens.ID})) {
 		String name = advanceValue(); 
 		return new Stmt.EyupCall(name);}
-		throw error("NOT A NAME");
+		throw error("Flummoxed: ain't a name?");
 	}
 	private Stmt returnStmt() {
 		
@@ -274,12 +291,12 @@ public class Parser {
 		return new Stmt.Expression(expr);
 	}
 
-	private Stmt printStmt() {
+	private Stmt printStmt(int type) {
 		Tokens[] token = {Tokens.L_PAREN};
 		if (match(token)) {
 			Expr literal = expression();
 			takeToken(Tokens.R_PAREN,"Ey up! Was expecting ')'");
-			return new Stmt.Print(literal);
+			return new Stmt.Print(literal, type);
 		}
 		else {
 			throw error("Print");

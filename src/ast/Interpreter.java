@@ -1,5 +1,8 @@
 package ast;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,6 +27,7 @@ import ast.Stmt.Expression;
 import ast.Stmt.EyupCall;
 import ast.Stmt.ForgetVar;
 import ast.Stmt.Print;
+import ast.Stmt.Read;
 import ast.Stmt.Return;
 import ast.Stmt.SitheCall;
 import ast.Stmt.When;
@@ -45,7 +49,7 @@ public class Interpreter implements NodeVisitor {
 	
 	
 	public EyupBodger currentBodger;
-	
+	static BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 	
 	public Interpreter() {
 		 this.currentBodger = new EyupBodger("Gaffer");
@@ -197,7 +201,12 @@ public class Interpreter implements NodeVisitor {
 	@Override
 	public Object visitPrintStmt(Print stmt) {
 		Object value = stmt.expr.accept(this);
-	    System.out.println(toString(value));
+		if(stmt.type == 0) {
+			System.out.println(toString(value));
+		}
+		if(stmt.type == 1) {
+			System.out.print(toString(value));
+		}
 	    return toString(value);
 		
 	}
@@ -445,13 +454,19 @@ public class Interpreter implements NodeVisitor {
 		Interpreter i = new Interpreter();
 		lexer.OutputTuple lexed;
 		Resolver resolver = new Resolver(i);
-		lexed = l.lexString("fettle add(n:Number) giz add:=n+n oer");
+		lexed = l.lexString("fettle add giz summat x:Script read(x) oer");
 		lexed.tokens.add(Tokens.EOI);
 		ArrayList<Stmt> stmts = p.parseInput(lexed);
 		resolver.resolve(stmts);
 		i.interpret(stmts);
 		
-		lexed = l.lexString("add(2)");
+		lexed = l.lexString("add()");
+		lexed.tokens.add(Tokens.EOI);
+		stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
+		
+		lexed = l.lexString("forget add");
 		lexed.tokens.add(Tokens.EOI);
 		stmts = p.parseInput(lexed);
 		resolver.resolve(stmts);
@@ -533,6 +548,18 @@ public class Interpreter implements NodeVisitor {
 		}
 		
 		return output;
+	}
+	@Override
+	public Object visitRead(Read read) {
+		String value = "nowt";
+		try {
+			value = input.readLine();
+			currentBodger.rt.assign(read.var,new EnvVar(value, Tokens.SCRIPT));
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return value;
 	}
 	 
 
