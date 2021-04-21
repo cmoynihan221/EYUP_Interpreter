@@ -361,11 +361,13 @@ public class Interpreter implements NodeVisitor {
 		EyupBodger previous = currentBodger;
 		try {
 			currentBodger = funcBodge;
+			currentBodger.rt = currentBodger.globals;
 			for(Stmt stmt:stmts) {
 				stmt.accept(this);
 			}
 		}finally {
 			currentBodger = previous;
+			currentBodger.rt = currentBodger.globals;
 		}
 		
 		
@@ -454,23 +456,18 @@ public class Interpreter implements NodeVisitor {
 		Interpreter i = new Interpreter();
 		lexer.OutputTuple lexed;
 		Resolver resolver = new Resolver(i);
-		lexed = l.lexString("fettle add giz summat x:Script read(x) oer");
+		lexed = l.lexString("fettle add(n:Number) giz add:=n+n   oer");
 		lexed.tokens.add(Tokens.EOI);
 		ArrayList<Stmt> stmts = p.parseInput(lexed);
 		resolver.resolve(stmts);
 		i.interpret(stmts);
 		
-		lexed = l.lexString("add()");
+		lexed = l.lexString("add(2)");
 		lexed.tokens.add(Tokens.EOI);
 		stmts = p.parseInput(lexed);
 		resolver.resolve(stmts);
 		i.interpret(stmts);
 		
-		lexed = l.lexString("forget add");
-		lexed.tokens.add(Tokens.EOI);
-		stmts = p.parseInput(lexed);
-		resolver.resolve(stmts);
-		i.interpret(stmts);
 		
 		lexed = l.lexString("gander");
 		lexed.tokens.add(Tokens.EOI);

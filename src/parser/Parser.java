@@ -265,8 +265,9 @@ public class Parser {
 	
 	private Stmt eyupStatement() {
 		if(match(new Tokens[] {Tokens.ID})) {
-		String name = advanceValue(); 
-		return new Stmt.EyupCall(name);}
+			String name = advanceValue(); 
+			return new Stmt.EyupCall(name);
+		}
 		throw error("Flummoxed: ain't a name?");
 	}
 	private Stmt returnStmt() {

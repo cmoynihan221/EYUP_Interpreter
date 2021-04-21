@@ -31,8 +31,8 @@ public class EyupBodger implements Callable {
 	
 	public EyupBodger(EyupBodger copy ) {
 		this.name = copy.name;
-		this.locals = copy.locals;
-		this.globals = copy.globals;
+		this.locals = new HashMap<>(copy.locals);
+		this.globals = new RTEnvironment(copy.globals);
 		this.rt = copy.rt;
 		this.parent = copy.parent;
 	}
