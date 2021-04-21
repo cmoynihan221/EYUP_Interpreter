@@ -44,7 +44,6 @@ public class EyupBodger implements Callable {
 
 	@Override
 	public int arity() {
-		
 		return 0;
 	}
 

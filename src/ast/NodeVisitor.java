@@ -32,5 +32,6 @@ public interface NodeVisitor {
 	public Object visitMissenExpr(Missen missen);
 	public Object visitGander(Gander gander);
 	public Object visitRead(Read read);
+	public Object visitInstanceExpr(Instance instance);
 	
 }

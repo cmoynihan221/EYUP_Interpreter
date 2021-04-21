@@ -475,10 +475,10 @@ public class Parser {
 			Expr expr = group();
 			
 			if (match(new Tokens[]{Tokens.L_PAREN})) {
-				expr = endCall(expr);
+				expr = endInstanceCall(expr);
 				return expr;
 			}else{
-				return new Expr.Call(expr,arguments);
+				return new Expr.Instance(expr,arguments);
 			}
 		}
 		return call();
@@ -515,6 +515,28 @@ public class Parser {
 		    takeToken(Tokens.R_PAREN,"Expect ')' after arguments.");
 
 		    return new Expr.Call(called, arguments);
+		  }
+	 private Expr endInstanceCall(Expr called) {
+		    List<Expr> arguments = new ArrayList<>();
+	
+		    if (!check(Tokens.R_PAREN)) {
+		      do {
+		    	  if(arguments.size()>=255) {
+		    		  error("Can't have more than 255 arguments. ");
+		    	  }
+		    	Expr expr = expression();
+		    	if (expr instanceof Expr.Assignment) {
+		    		arguments.add(expr);
+		    	}else {
+		    		throw error("Not an assignment!");
+		    	}
+		        
+		      } while (match(new Tokens[]{Tokens.COMMA}));
+		    }
+
+		    takeToken(Tokens.R_PAREN,"Expect ')' after arguments.");
+
+		    return new Expr.Instance(called, arguments);
 		  }
 	private Expr group() {
 		if (match(new Tokens[]{Tokens.L_PAREN})) {

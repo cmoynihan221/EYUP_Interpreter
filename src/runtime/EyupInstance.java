@@ -16,6 +16,10 @@ public class EyupInstance {
 		return bodger.name+  " instance";
 	}
 	
+	public EyupBodger getBodger() {
+		return bodger;
+	}
+	
 	public Object get(String name, Get get) {
 		Object var = bodger.lookUpVariable(name, get);
 		if (var != null ) {

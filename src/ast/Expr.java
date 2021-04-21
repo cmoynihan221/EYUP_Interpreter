@@ -156,7 +156,21 @@ public interface Expr {
 		}
 	   
 	 }
-
+	 
+	 class Instance implements Expr{
+		 public Instance(Expr called, List<Expr> args) {
+		      this.called = called;
+		      this.args = args;
+		      
+		    }
+		//accept method redirects to visitor 
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			 return visitor.visitInstanceExpr(this);
+		}
+	    final Expr called;
+	    final List<Expr> args;
+	 }
 	
 	
 }

@@ -14,6 +14,7 @@ import ast.Expr.Assignment;
 import ast.Expr.Binary;
 import ast.Expr.Call;
 import ast.Expr.Group;
+import ast.Expr.Instance;
 import ast.Expr.Logical;
 import ast.Expr.Missen;
 import ast.Expr.Primary;
@@ -331,20 +332,46 @@ public class Interpreter implements NodeVisitor {
 			args.add(arg.accept(this));
 		}
 		
-		if(!(called instanceof Callable)) {
-			throw new RuntimeException("Can only call functions and bodgers");
+		if(!(called instanceof EyupFunction)) {
+			throw new RuntimeException("Can only call functions");
 		}
-		Callable function = (Callable)called;
+		EyupFunction callable = (EyupFunction)called;
 		
-		if(args.size() != function.arity()) {
+		if(args.size() != callable.arity()) {
 			throw new RuntimeException("Expected " +
-			          function.arity() + " arguments but got " +
+					callable.arity() + " arguments but got " +
 			          args.size());
 		}
 		
-		return function.call(this, args);
+		return callable.call(this, args);
 		
 	}
+
+	@Override
+	public Object visitInstanceExpr(Instance instance) {
+		Object called = instance.called.accept(this);
+		List<Object> args = new ArrayList<>();
+		if(!(called instanceof EyupBodger)) {
+			throw new RuntimeException("Error not a Bodger!");
+		}
+		EyupBodger callable = (EyupBodger)called;
+		Object bodger = callable.call(this,args);
+		
+		EyupInstance inst = ((EyupInstance)bodger);
+		EyupBodger previous = currentBodger;
+		if(!(instance.args.isEmpty())) {
+			currentBodger =inst.getBodger();
+			for (Expr arg : instance.args) {
+				arg.accept(this);
+			}
+			currentBodger = previous;
+		}
+		
+		return bodger;
+		
+	}
+	 
+
 	@Override
 	public Object visitFunction(Function function) {
 		EyupFunction fun = new EyupFunction(function,currentBodger);
@@ -456,18 +483,42 @@ public class Interpreter implements NodeVisitor {
 		Interpreter i = new Interpreter();
 		lexer.OutputTuple lexed;
 		Resolver resolver = new Resolver(i);
-		lexed = l.lexString("fettle add(n:Number) giz add:=n+n   oer");
+		lexed = l.lexString("Bodger Car");
 		lexed.tokens.add(Tokens.EOI);
 		ArrayList<Stmt> stmts = p.parseInput(lexed);
 		resolver.resolve(stmts);
 		i.interpret(stmts);
 		
-		lexed = l.lexString("add(2)");
+		lexed = l.lexString("eyup Car");
 		lexed.tokens.add(Tokens.EOI);
 		stmts = p.parseInput(lexed);
 		resolver.resolve(stmts);
 		i.interpret(stmts);
 		
+		
+		lexed = l.lexString("summat x : Number");
+		lexed.tokens.add(Tokens.EOI);
+		stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
+		
+		lexed = l.lexString("sithee");
+		lexed.tokens.add(Tokens.EOI);
+		stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
+		
+		lexed = l.lexString("summat polo := eyup Car(t := 4)");
+		lexed.tokens.add(Tokens.EOI);
+		stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
+		
+		lexed = l.lexString("polo.x");
+		lexed.tokens.add(Tokens.EOI);
+		stmts = p.parseInput(lexed);
+		resolver.resolve(stmts);
+		i.interpret(stmts);
 		
 		lexed = l.lexString("gander");
 		lexed.tokens.add(Tokens.EOI);
@@ -558,6 +609,6 @@ public class Interpreter implements NodeVisitor {
 		}
 		return value;
 	}
-	 
+	
 
 }

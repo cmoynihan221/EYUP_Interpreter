@@ -8,6 +8,7 @@ import ast.Expr.Assignment;
 import ast.Expr.Binary;
 import ast.Expr.Call;
 import ast.Expr.Group;
+import ast.Expr.Instance;
 import ast.Expr.Logical;
 import ast.Expr.Missen;
 import ast.Expr.Primary;
@@ -268,6 +269,12 @@ public class Resolver implements NodeVisitor {
 	@Override
 	public Object visitRead(Read read) {
 		
+		return null;
+	}
+
+	@Override
+	public Object visitInstanceExpr(Instance instance) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 
