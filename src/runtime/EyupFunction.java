@@ -10,6 +10,7 @@ import enums.Type;
 public class EyupFunction implements Callable{
 	private Stmt.Function declaration;
 	private final EyupBodger closure;
+	
 	public EyupFunction(Stmt.Function dec,EyupBodger currentBodger) {
 		this.declaration = dec;
 		this.closure = currentBodger;
@@ -37,11 +38,12 @@ public class EyupFunction implements Callable{
 	public Object call(Interpreter interpreter, List<Object> args) {
 		EyupBodger envi = new EyupBodger(closure);
 		Integer paramnum = 0;
+		
 		if(declaration.params!=null) {
 			for (int i = 0; i<declaration.params.size();i++) {
 				for (int n = 0; n<declaration.params.get(i).size();n++) {
 					checkType(declaration.params.get(i).type, args.get(paramnum));
-					envi.globals.define(declaration.params.get(i).params.get(paramnum), new EnvVar( args.get(paramnum),declaration.params.get(i).type));
+					envi.globals.define(declaration.params.get(i).params.get(n), new EnvVar( args.get(paramnum),declaration.params.get(i).type));
 					paramnum++;
 				}
 			}

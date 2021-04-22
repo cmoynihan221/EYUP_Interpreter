@@ -194,14 +194,15 @@ public class Resolver implements NodeVisitor {
 	private void resolveFunction(Stmt.Function function) {
 		beginScope();
 		if(function.params !=null) {
-		for(FParam paraType: function.params) {
-			for(String para:paraType.params ) {
-				declare(para);
-				define(para);
-			}
-			resolve(function.body);
+			for(FParam paraType: function.params) {
+				for(String para:paraType.params ) {
+					declare(para);
+					define(para);
+					}
+				resolve(function.body);
+				}
 			endScope();
-		}}
+			}
 		else {
 			endScope();
 		}

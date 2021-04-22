@@ -20,7 +20,11 @@ public interface Stmt {
 	}
 
 	public class Gander implements Stmt {
-		
+		String varName; 
+		public Gander(String varName) {
+			this.varName = varName;
+		}
+
 		@Override
 		public Object accept(NodeVisitor visitor) {
 			return visitor.visitGander(this);

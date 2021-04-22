@@ -6,5 +6,6 @@ public enum Type {
 	Int,
 	Char,
 	Bool,
-	Instance
+	Instance,
+	Bodger
 }

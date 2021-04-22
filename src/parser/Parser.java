@@ -2,6 +2,7 @@ package parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import enums.Tokens;
 import lexer.Lexer;
@@ -17,6 +18,7 @@ public class Parser {
 	int currentValue; 
 	OutputTuple input;
 	String currentFunction = null;
+	Stack<String> functions = new Stack<>();
 	
 	private String spaces() {
 		String returnString = "";
@@ -76,7 +78,12 @@ public class Parser {
 	private Stmt.Function function(String string) {
 		takeToken(Tokens.ID,"Expect function name");
 		String name = advanceValue();
-		currentFunction = name;
+		if (currentFunction != null) {
+			functions.push(currentFunction);
+			currentFunction = name;
+		}else {
+			currentFunction = name;
+		}
 		List<FParam> params = null;
 		Integer total = 0;
 		//If match with (
@@ -138,7 +145,12 @@ public class Parser {
 		} else {
 			error("Expected giz or gizoer");
 		}
-		currentFunction = null;
+		if(functions.empty()) {
+			currentFunction = null;
+		}else {
+			currentFunction = functions.pop();
+		}
+		
 		return new Stmt.Function(name, params, body, type);
 	}
 	private List<Stmt> block(){
@@ -255,7 +267,11 @@ public class Parser {
 	}
 
 	private Stmt ganderStmt() {
-		return new Stmt.Gander();
+		String varName = null;
+		if(match(new Tokens[] {Tokens.ID})){
+			varName = advanceValue();
+		}
+		return new Stmt.Gander(varName);
 	}
 
 	private Stmt sitheStmt() {

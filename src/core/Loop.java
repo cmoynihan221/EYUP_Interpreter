@@ -11,6 +11,7 @@ import ast.Interpreter;
 import ast.Resolver;
 //import ast.NodePrintVisitor;
 import ast.Stmt;
+import ast.TypeChecker;
 import enums.Tokens;
 import lexer.Lexer;
 import lexer.OutputTuple;
@@ -21,6 +22,7 @@ public class Loop {
 	private static Lexer l = new Lexer();
 	private static Parser p = new Parser();
 	private static Interpreter i = new Interpreter();
+	private static TypeChecker t = new TypeChecker();
 	private static Resolver resolver = new Resolver(i);
 	static BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 	
@@ -51,13 +53,14 @@ public class Loop {
 			try {
 				OutputTuple lexed = getInput("");
 				ArrayList<Stmt> stmts = p.parseInput(lexed);
+				t.check(stmts);
 			    resolver.resolve(stmts);
 			    i.interpret(stmts);
 			    System.out.print(i.currentBodger.name+">");
 				}
 			catch(RuntimeException e) {	
-				
-			    }
+				System.out.print(i.currentBodger.name+">");
+			  }
 			
 		}
 	}

@@ -52,6 +52,8 @@ public class Interpreter implements NodeVisitor {
 	public EyupBodger currentBodger;
 	static BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 	
+	
+	
 	public Interpreter() {
 		 this.currentBodger = new EyupBodger("Gaffer");
 		 
@@ -481,50 +483,30 @@ public class Interpreter implements NodeVisitor {
 		Parser p = new Parser();
 		Lexer l = new Lexer();
 		Interpreter i = new Interpreter();
+		TypeChecker t = new TypeChecker();
 		lexer.OutputTuple lexed;
 		Resolver resolver = new Resolver(i);
-		lexed = l.lexString("Bodger Car");
+		lexed = l.lexString("summat x :=7");
 		lexed.tokens.add(Tokens.EOI);
 		ArrayList<Stmt> stmts = p.parseInput(lexed);
+		t.check(stmts);
 		resolver.resolve(stmts);
 		i.interpret(stmts);
-		
-		lexed = l.lexString("eyup Car");
+		lexed = l.lexString("fettle give : Number giz fettle five : Script giz five := \"five\" oer give:= five() oer");
 		lexed.tokens.add(Tokens.EOI);
 		stmts = p.parseInput(lexed);
 		resolver.resolve(stmts);
+		t.check(stmts);
 		i.interpret(stmts);
-		
-		
-		lexed = l.lexString("summat x : Number");
+		lexed = l.lexString("give()");
 		lexed.tokens.add(Tokens.EOI);
 		stmts = p.parseInput(lexed);
 		resolver.resolve(stmts);
+		t.check(stmts);
 		i.interpret(stmts);
 		
-		lexed = l.lexString("sithee");
-		lexed.tokens.add(Tokens.EOI);
-		stmts = p.parseInput(lexed);
-		resolver.resolve(stmts);
-		i.interpret(stmts);
 		
-		lexed = l.lexString("summat polo := eyup Car(t := 4)");
-		lexed.tokens.add(Tokens.EOI);
-		stmts = p.parseInput(lexed);
-		resolver.resolve(stmts);
-		i.interpret(stmts);
 		
-		lexed = l.lexString("polo.x");
-		lexed.tokens.add(Tokens.EOI);
-		stmts = p.parseInput(lexed);
-		resolver.resolve(stmts);
-		i.interpret(stmts);
-		
-		lexed = l.lexString("gander");
-		lexed.tokens.add(Tokens.EOI);
-		stmts = p.parseInput(lexed);
-		resolver.resolve(stmts);
-		i.interpret(stmts);
 		
 		
 		
@@ -583,8 +565,15 @@ public class Interpreter implements NodeVisitor {
 	@Override
 	public Object visitGander(Gander gander) {
 		String output = "nowt";
+		if(!(gander.varName == null)) {
+			Object ret = currentBodger.globals.get(gander.varName);
+			if(ret instanceof EnvVar) {
+				Tokens type = ((EnvVar)ret).type;
+			}
+			System.out.print(ret);
+		}
 		if (currentBodger.globals.notEmpty()) {
-			Iterator values = currentBodger.globals.getValues().iterator();
+			Iterator<String> values = currentBodger.globals.getValues().iterator();
 			output = "";
 			while(values.hasNext()) {
 				output = output + currentBodger.name+"."+values.next();
