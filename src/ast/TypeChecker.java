@@ -8,12 +8,14 @@ import java.util.Stack;
 import ast.Expr.Assignment;
 import ast.Expr.Binary;
 import ast.Expr.Call;
+import ast.Expr.CharAccess;
 import ast.Expr.Get;
 import ast.Expr.Group;
 import ast.Expr.Instance;
 import ast.Expr.Logical;
 import ast.Expr.Missen;
 import ast.Expr.Primary;
+import ast.Expr.StringAccess;
 import ast.Expr.Unary;
 import ast.Expr.Var;
 import ast.Stmt.Block;
@@ -96,7 +98,12 @@ public class TypeChecker implements NodeVisitor {
 	public Object visitBinaryExpr(Binary expr) {
 		Object left = expr.left.accept(this);
 		Object right = expr.right.accept(this);
-		return null;
+		if(left.equals(right)) {
+			return left;
+		}
+		else {
+			throw new RuntimeException("Vexed: summat missmatch");
+		}
 	}
 
 	@Override
@@ -173,7 +180,7 @@ public class TypeChecker implements NodeVisitor {
 
 	@Override
 	public Object visitForgetVar(ForgetVar forgetVar) {
-		// TODO Auto-generated method stub
+		this.current.remove(forgetVar.name);
 		return null;
 	}
 
@@ -187,10 +194,14 @@ public class TypeChecker implements NodeVisitor {
 
 	@Override
 	public Object visitLogicExpr(Logical logical) {
-		checkExpr(logical.left);
-		checkExpr(logical.right);
-		
-		return null;
+		try {
+			Boolean left = (Boolean) checkExpr(logical.left);
+			Boolean right = (Boolean) checkExpr(logical.right);
+			return Tokens.ANSWER;
+		}
+		catch(ClassCastException c) {
+			throw new RuntimeException("Vexed: needs Answer");
+		}
 	}
 
 	@Override
@@ -216,6 +227,7 @@ public class TypeChecker implements NodeVisitor {
 
 	@Override
 	public Object visitCallExpr(Call call) {
+		
 		Object called = checkExpr(call.called);
 		if(called instanceof FunctionCall) {
 			int counter= 0; 
@@ -300,7 +312,7 @@ public class TypeChecker implements NodeVisitor {
 
 	@Override
 	public Object visitBodger(Bodger bodger) {
-		Tokens type = Tokens.SUMMAT;
+		Tokens type = Tokens.BODGER;
 		return type;
 	}
 
@@ -324,20 +336,17 @@ public class TypeChecker implements NodeVisitor {
 
 	@Override
 	public Object visitMissenExpr(Missen missen) {
-		// TODO Auto-generated method stub
-		return null;
+		return Tokens.BODGER;
 	}
 
 	@Override
 	public Object visitGander(Gander gander) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Object visitRead(Read read) {
-		// TODO Auto-generated method stub
-		return null;
+		return Tokens.SCRIPT;
 	}
 
 	@Override
@@ -350,6 +359,16 @@ public class TypeChecker implements NodeVisitor {
 	}
 	public Object checkStmt(Stmt stmt) {
 		return stmt.accept(this);
+	}
+	@Override
+	public Object visitStringAccess(StringAccess stringAccess) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public Object visitCharAccess(CharAccess charAccess) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

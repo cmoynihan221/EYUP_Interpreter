@@ -13,11 +13,13 @@ import java.util.Set;
 import ast.Expr.Assignment;
 import ast.Expr.Binary;
 import ast.Expr.Call;
+import ast.Expr.CharAccess;
 import ast.Expr.Group;
 import ast.Expr.Instance;
 import ast.Expr.Logical;
 import ast.Expr.Missen;
 import ast.Expr.Primary;
+import ast.Expr.StringAccess;
 import ast.Expr.Unary;
 import ast.Expr.Var;
 import ast.Expr.Get;
@@ -97,31 +99,34 @@ public class Interpreter implements NodeVisitor {
       	// TODO edit these to work with strings, letters, nums and bool, float
 		case GREAT:
 			checkNumOperands(expr.op,left,right);
-			return (Integer)left > (Integer)right;
+			return (Double)left > (Double)right;
 		case GREAT_EQ:
 			checkNumOperands(expr.op,left,right);
-			return (Integer)left >= (Integer)right;
+			return (Double)left >= (Double)right;
       	case LESS:
       		checkNumOperands(expr.op,left,right);
-      		return (Integer)left < (Integer)right;
+      		return (Double)left < (Double)right;
       	case LESS_EQ:
       		checkNumOperands(expr.op,left,right);
-      		return (Integer)left <= (Integer)right;
+      		return (Double)left <= (Double)right;
 		case MINUS:
 			checkNumOperands(expr.op,left,right);
-			return (Integer)left - (Integer)right;
+			return (Double)left - (Double)right;
 		case PLUS:
 			checkNumOperands(expr.op,left,right);
-			return (Integer)left + (Integer)right;
+			return (Double)left + (Double)right;
 		case STAR:
 			checkNumOperands(expr.op,left,right);
-			return (Integer)left * (Integer)right;
+			return (Double)left * (Double)right;
 		case FSLASH:
 			checkNumOperands(expr.op,left,right);
-			return (Integer)left / (Integer)right;
+			return (Double)left / (Double)right;
 		case DOLLA:
 			checkStringOperands(expr.op,left,right);
 			return (String)left+(String)right;
+		case PERCENT:
+			checkNumOperands(expr.op,left,right);
+			return (Double)left%(Double)right;
 		default:
 			return null;
 		}
@@ -598,6 +603,42 @@ public class Interpreter implements NodeVisitor {
 		}
 		return value;
 	}
+	@Override
+	public Object visitStringAccess(StringAccess stringAccess) {
+		Object value = stringAccess.name.accept(this);
+		Object index = stringAccess.index.accept(this);
+		if(value instanceof String && index instanceof Integer) {
+			return ((String)value).charAt((Integer)index);
+		}
+		throw new RuntimeException("Vexed: "
+				+ value + " aint String or "
+						+ index + " aint Number");
+	}
+	/**
+	@Override
+	public Object visitCharAccess(CharAccess charAccess) {
+		if(charAccess.name instanceof StringAccess) {
+			if(charAccess.index instanceof Expr.Primary) {
+				Object index = ((Expr.Primary)charAccess.).accept(this);
+				if(index instanceof Integer) {
+					Integer index = (Integer)index;
+					Object name = (( Expr.StringAccess)charAccess.name).name;
+					if(name instanceof Expr.Var) {
+						Object thename = ((Expr.Var)name).accept(this);
+						if(thename instanceof String) {
+							StringBuilder newString = new StringBuilder(((String)thename));
+							String newValue = (String)newString.setCharAt((Integer)index, (char)charAccess.value.accept(this));
+						}
+				}
+				
+				
+			}
+		}
+			
+			
+		}
+		return null;
+	}**/
 	
 
 }

@@ -6,6 +6,33 @@ import enums.Tokens;
 //Abstract Expression Cast With different expression types 
 public interface Expr {
 	
+	public class CharAccess implements Expr {
+		Expr name;
+		Expr value;
+		public CharAccess(Expr name, Expr  value){
+			this.name = name;
+			this.value = value;
+		}
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			return visitor.visitCharAccess(this);
+		}
+
+	}
+	public class StringAccess implements Expr {
+		Expr name;
+		Expr index;
+		public StringAccess(Expr name, Expr index){
+			this.index = index;
+			this.name = name;
+		}
+		@Override
+		public Object accept(NodeVisitor visitor) {
+			return visitor.visitStringAccess(this);
+		}
+
+	}
+
 	//Visitor accept abstract method for expression class  
 	public Object accept(NodeVisitor visitor);
 	

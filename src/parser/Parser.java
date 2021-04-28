@@ -385,9 +385,20 @@ public class Parser {
 	private Expr expression() {
 		return assignment();
 	}
+	
+	
 	private Expr assignment() {
 		Tokens[] tokens = {Tokens.COLON_EQ};
-		Expr expr = or();
+		Expr expr = stringAccess();
+		if(expr instanceof Expr.StringAccess) {
+			if(match(tokens)) {
+				Expr value = assignment();
+				if(expr instanceof Expr.Var) {
+					return new Expr.CharAccess(expr, value);
+				}
+				error("char assign error");
+			}
+		}
 		if(match(tokens)) {
 			Expr value = assignment();
 			if(expr instanceof Expr.Var) {
@@ -401,6 +412,15 @@ public class Parser {
 		}
 		return expr;
 		
+	}
+	private Expr stringAccess() {
+		Expr name = or();
+		if(match(new Tokens[]{Tokens.LS_BRACKET})) {
+			Expr index = primary();
+			takeToken(Tokens.RS_BRACKET,"Ey up! Was expecting ']'");
+			return new Expr.StringAccess(name,index);
+		}
+		return name;
 	}
 	private Expr or() {
 		Expr expr = and();
@@ -554,6 +574,7 @@ public class Parser {
 
 		    return new Expr.Instance(called, arguments);
 		  }
+	
 	private Expr group() {
 		if (match(new Tokens[]{Tokens.L_PAREN})) {
 			Expr expr = expression();

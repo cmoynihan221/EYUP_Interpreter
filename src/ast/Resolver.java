@@ -7,11 +7,13 @@ import java.util.Stack;
 import ast.Expr.Assignment;
 import ast.Expr.Binary;
 import ast.Expr.Call;
+import ast.Expr.CharAccess;
 import ast.Expr.Group;
 import ast.Expr.Instance;
 import ast.Expr.Logical;
 import ast.Expr.Missen;
 import ast.Expr.Primary;
+import ast.Expr.StringAccess;
 import ast.Expr.Unary;
 import ast.Expr.Var;
 import ast.Expr.Get;
@@ -275,6 +277,18 @@ public class Resolver implements NodeVisitor {
 
 	@Override
 	public Object visitInstanceExpr(Instance instance) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Object visitStringAccess(StringAccess stringAccess) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Object visitCharAccess(CharAccess charAccess) {
 		// TODO Auto-generated method stub
 		return null;
 	}

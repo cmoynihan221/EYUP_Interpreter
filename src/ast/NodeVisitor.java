@@ -33,5 +33,7 @@ public interface NodeVisitor {
 	public Object visitGander(Gander gander);
 	public Object visitRead(Read read);
 	public Object visitInstanceExpr(Instance instance);
+	public Object visitStringAccess(StringAccess stringAccess);
+	public Object visitCharAccess(CharAccess charAccess);
 	
 }
