@@ -53,23 +53,23 @@ public class EyupFunction implements Callable{
 		}catch(Return returnValue) {
 			return returnValue.value;
 		}
-		return "nowt";
+		return null;
 		
 	}
 
 	private void checkType(Tokens type, Object arg) {
 		if(!(type == getType(arg))) {
-			throw new RuntimeException("Param of wrong type");
+			throw new RuntimeException("Vexed: Param of wrong type");
 		}
 	}
 	private Tokens getType(Object value) {
 		switch(checkType(value)) {
-		case Int: case Float: return Tokens.NUMBER;
+		case Int: case Float: case Double: return Tokens.NUMBER;
 		case Char: return Tokens.LETTER;
 		case String: return Tokens.SCRIPT;
 		case Bool: return Tokens.ANSWER;
 		default:
-			throw new RuntimeException("Unknown Type");
+			throw new RuntimeException("Flummoxed: Unknown Type");
 		}
 		
 	}
@@ -80,6 +80,9 @@ public class EyupFunction implements Callable{
 		if (value instanceof Float) {
 			return Type.Float;
 		}
+		if (value instanceof Double) {
+			return Type.Double;
+		}
 		if (value instanceof String) {
 			if (((String) value).length() == 1) {
 				return Type.Char;
@@ -89,7 +92,7 @@ public class EyupFunction implements Callable{
 		if (value instanceof Boolean ) {
 			return Type.Bool;
 		}
-		throw new RuntimeException("Unknown Type");
+		throw new RuntimeException("Flummoxed: Unknown Type");
 	}
 
 	public EyupFunction bind(EyupInstance instance) {

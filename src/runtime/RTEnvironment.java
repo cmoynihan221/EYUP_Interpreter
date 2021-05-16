@@ -25,11 +25,7 @@ public class RTEnvironment {
 			return values.get(name).value;
 		}
 		if (enclosed != null) return enclosed.get(name);
-		throw error("Flummoxed: weerz "+name+"?");
-	}
-	private RuntimeException error(String error) {
-		core.Error.runtimeError(error);
-		return new RuntimeException();
+		throw new RuntimeException("Flummoxed: weerz "+name+"?");
 	}
 	public void assign(String name, EnvVar value) {
 		if(values.containsKey(name)) {	
@@ -38,7 +34,7 @@ public class RTEnvironment {
 				values.put(name, value);
 				return;
 			}
-			throw error("Vexed: "+ name + " wi' bad'un "+ value.value+":"+value.type);
+			throw new RuntimeException("Vexed: "+ name + " wi' bad'un "+ value.value+":"+value.type);
 			
 		}
 		if (enclosed != null) {
@@ -46,7 +42,7 @@ public class RTEnvironment {
 			
 			return;
 		}
-		throw error("Flummoxed: weerz "+name+"?");
+		throw new RuntimeException("Flummoxed: weerz "+name+"?");
 	}
 	public void remove(String name) {
 		if(values.containsKey(name)) {
@@ -57,7 +53,7 @@ public class RTEnvironment {
 			enclosed.remove(name);
 			return;
 		}
-		throw error("Flummoxed: weerz "+name+"?");
+		throw new RuntimeException("Flummoxed: weerz "+name+"?");
 	}
 	private Boolean checkType(EnvVar newVal, EnvVar stored) {
 		if(newVal.type == stored.type) {

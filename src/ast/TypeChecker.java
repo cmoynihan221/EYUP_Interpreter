@@ -53,42 +53,7 @@ public class TypeChecker implements NodeVisitor {
 			throw new RuntimeException();
 		}
 	   }
-	private Type checkType(Object value) {
-		if (value instanceof Integer) {
-			return Type.Int;
-		}
-		if (value instanceof Float) {
-			return Type.Float;
-		}
-		if (value instanceof String) {
-			if (((String) value).length() == 1) {
-				return Type.Char;
-			}
-			return Type.String;
-		}
-		if (value instanceof Boolean ) {
-			return Type.Bool;
-		}
-		if (value instanceof EyupInstance ) {
-			return Type.Instance;
-		}
-		if (value instanceof EyupBodger ) {
-			return Type.Bodger;
-		}
-		throw new RuntimeException("Unknown Type");
-	}
-	private Tokens getType(Object value) {
-
-		switch(checkType(value)) {
-		case Int: case Float: return Tokens.NUMBER;
-		case Char: return Tokens.LETTER;
-		case String: return Tokens.SCRIPT;
-		case Bool: return Tokens.ANSWER;
-		case Instance: return Tokens.INSTANCE;
-		case Bodger: return Tokens.BODGER;
-		}
-		throw new RuntimeException("Unknown Type");
-	}
+	
 	
 	public TypeChecker()  {
 		// TODO Auto-generated constructor stub
@@ -98,6 +63,7 @@ public class TypeChecker implements NodeVisitor {
 	public Object visitBinaryExpr(Binary expr) {
 		Object left = expr.left.accept(this);
 		Object right = expr.right.accept(this);
+		
 		if(left.equals(right)) {
 			return left;
 		}
@@ -194,14 +160,12 @@ public class TypeChecker implements NodeVisitor {
 
 	@Override
 	public Object visitLogicExpr(Logical logical) {
-		try {
-			Boolean left = (Boolean) checkExpr(logical.left);
-			Boolean right = (Boolean) checkExpr(logical.right);
+		
+		if((checkExpr(logical.left).equals(Tokens.ANSWER))&&(checkExpr(logical.right).equals(Tokens.ANSWER))) {
 			return Tokens.ANSWER;
 		}
-		catch(ClassCastException c) {
-			throw new RuntimeException("Vexed: needs Answer");
-		}
+		throw new RuntimeException("Vexed: needs Answer");
+		
 	}
 
 	@Override
@@ -239,7 +203,7 @@ public class TypeChecker implements NodeVisitor {
 						if( paramType != param.type) {
 							throw new RuntimeException("Vexed: "
 									+ "bad'un: "
-									+ paramType);
+									+ p);
 						}
 						counter++;
 					}

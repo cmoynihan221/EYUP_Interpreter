@@ -50,6 +50,7 @@ public class Parser {
 			return parsedStatements;			
 		} catch(RuntimeException error) {
 			spaceStack = 0;
+			System.out.print(error.getMessage()+"\n");
 			return parsedStatements;
 			
 		}
@@ -65,8 +66,8 @@ public class Parser {
 			if(match(bodger)) return classDef();
 			return statement();
 		} catch(RuntimeException error) {
-			System.out.println(error);
-			throw error("assignment error");
+			
+			throw new RuntimeException(error.getMessage());
 			
 		}
 	}
@@ -181,13 +182,13 @@ public class Parser {
 			//If : then look for type declaration otherwise throw type error 
 			if(match(new Tokens[]{Tokens.COLON})) {
 				//Check for type declaration
-				Tokens[] tokens = {Tokens.SCRIPT, Tokens.LETTER, Tokens.NUMBER, Tokens.ANSWER, Tokens.NONE};
+				Tokens[] tokens = {Tokens.SCRIPT, Tokens.LETTER, Tokens.NUMBER, Tokens.ANSWER, Tokens.NONE, Tokens.BODGER};
 				if(match(tokens)) {
 					Tokens type = previous();
 					return new Stmt.DefVar(name,new Expr.Primary(type, null));
 				}else {
 					//type error
-					throw error("Variable Definition Error, Incorrect Type Defition.");
+					throw new RuntimeException("Vexed: Variable Definition Error, Incorrect Type Defition.");
 				}
 			//if := look for expression otherwise throw definition error	
 			}
@@ -197,10 +198,10 @@ public class Parser {
 				return new Stmt.DefVar(name, value);
 				
 			}else {
-				throw error("Incorrect variable definition.");
+				throw new RuntimeException("Vexed: Incorrect variable definition.");
 			}
 		}
-		else {throw error("Error at variable name");}	
+		else {throw new RuntimeException("Vexed: Error at variable name");}	
 	}
 	
 	private Stmt statement() {
@@ -210,6 +211,10 @@ public class Parser {
 			//System.out.println(peekValue().compareTo(currentFunction)==0);
 			if (currentFunction!=null &&peekValue().compareTo(currentFunction)==0) {
 				match(new Tokens[]{Tokens.ID});
+				if(match(new Tokens[]{Tokens.L_PAREN})) {
+					System.out.print("optiontaken");
+					return new Stmt.Expression(new Expr.Var((String)advanceValue()));
+				}
 				return returnStmt();
 			}
 		}
@@ -290,6 +295,7 @@ public class Parser {
 		
 		advanceValue(); 
 		Expr value = null;
+		
 		takeToken(Tokens.COLON_EQ, "Expect  ':=' for return");
 		
 		value = expression();
@@ -486,7 +492,7 @@ public class Parser {
 		return expr;
 	}
 	private Expr factor() {
-		Tokens[] tokens = {Tokens.STAR, Tokens.FSLASH};
+		Tokens[] tokens = {Tokens.STAR, Tokens.FSLASH, Tokens.PERCENT};
 		Expr expr = unary();
 		while(match(tokens)) {
 			Tokens op = previous();
@@ -591,15 +597,15 @@ public class Parser {
 		if (match(new Tokens[]{Tokens.STRING})) {
 			String value = (String)advanceValue();
 			if(value.length() == 1) {
-				return new Expr.Primary(Tokens.LETTER,value);
+				return new Expr.Primary(Tokens.LETTER,value.charAt(0));
 			}
 			else {
 			return new Expr.Primary(Tokens.SCRIPT,value);}
 		}
 		if (match(new Tokens[]{Tokens.INTEGER})) {
-			return new Expr.Primary(Tokens.NUMBER,Integer.parseInt((String)advanceValue()));}
+			return new Expr.Primary(Tokens.NUMBER,Double.parseDouble((String)advanceValue()));}
 		if (match(new Tokens[]{Tokens.FLOAT})) {
-			return new Expr.Primary(Tokens.NUMBER,Float.parseFloat((String)advanceValue()));}
+			return new Expr.Primary(Tokens.NUMBER,Double.parseDouble((String)advanceValue()));}
 		if (match(new Tokens[]{Tokens.TRUE})) {
 			return new Expr.Primary(Tokens.ANSWER, true);}
 		if (match(new Tokens[]{Tokens.FALSE})) {

@@ -3,6 +3,7 @@ package ast;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -63,26 +64,40 @@ public class Interpreter implements NodeVisitor {
 	public void interpret(ArrayList<Stmt> statements) {
 		try {
 			for(Stmt stmt:statements) {
-				System.out.println(stmt.accept(this));
+				System.out.print(toString(stmt.accept(this))+"\n");
 			}
-		}catch(RuntimeException error) {
-			System.out.println(error);
-			error("runtime error at interpret");
+		}
+		catch(core.Leave l) {
+			throw new core.Leave("Leaving!");
+		}
+		catch(runtime.Return r) {
+			System.out.print(toString(r.getMessage())+"\n");
+		}
+		catch(RuntimeException error) {
+			
+			System.out.print(error.getMessage()+"\n");
 		}
 		
 	}
-
+	private static DecimalFormat df2 = new DecimalFormat("#.##");
+	private String bstring(Object value) {
+		if(value instanceof String) return (String)value;
+		return toString(value);
+	}
 	private String toString(Object value) {
 		
 		//TODO write code for handling floats and ints
 		if (value == null) return "nowt";
 
-	    if (value instanceof Integer) {
-	      return ((Integer) value).toString();
+	    if (value instanceof Double) {
+	      return df2.format((Double) value);
 	    }
 	    if (value instanceof Boolean) {
 		      if ((boolean) value)return "aye";
 		      return "nay";
+		    }
+	    if (value instanceof String) {
+		      return "\""+ value+ "\"";
 		    }
 
 	    return value.toString();
@@ -96,19 +111,15 @@ public class Interpreter implements NodeVisitor {
 		case EXCLA_EQ: return !isEqual(left, right);
       	case EQUAL: return isEqual(left, right);
       	
-      	// TODO edit these to work with strings, letters, nums and bool, float
+      	
 		case GREAT:
-			checkNumOperands(expr.op,left,right);
-			return (Double)left > (Double)right;
+			return order(left,right, Tokens.GREAT);
 		case GREAT_EQ:
-			checkNumOperands(expr.op,left,right);
-			return (Double)left >= (Double)right;
+			return order(left,right, Tokens.GREAT_EQ);
       	case LESS:
-      		checkNumOperands(expr.op,left,right);
-      		return (Double)left < (Double)right;
+      		return order(left,right, Tokens.LESS);
       	case LESS_EQ:
-      		checkNumOperands(expr.op,left,right);
-      		return (Double)left <= (Double)right;
+      		return order(left,right, Tokens.LESS_EQ);
 		case MINUS:
 			checkNumOperands(expr.op,left,right);
 			return (Double)left - (Double)right;
@@ -122,8 +133,11 @@ public class Interpreter implements NodeVisitor {
 			checkNumOperands(expr.op,left,right);
 			return (Double)left / (Double)right;
 		case DOLLA:
-			checkStringOperands(expr.op,left,right);
-			return (String)left+(String)right;
+			checkStringOperands(expr.op,left,new String("null"));
+			if(right instanceof String) {
+				return (String)left+(String)right;
+			}
+			return (String)left+toString(right );
 		case PERCENT:
 			checkNumOperands(expr.op,left,right);
 			return (Double)left%(Double)right;
@@ -132,36 +146,47 @@ public class Interpreter implements NodeVisitor {
 		}
 		
 	}
-	@SuppressWarnings("unused")
-	private Boolean compareStrings(String left, String right, Tokens op) {
-		int comp = left.compareTo(right);
-		switch(comp) {
-		case -1: switch(op) {
-		case LESS:case LESS_EQ:return true;
-		case GREAT:case GREAT_EQ: return false;
-		default:
-			break;
-		}
-		case 0: switch(op) {
-		case GREAT_EQ:case LESS_EQ:return true;
-		case GREAT:case LESS: return false;
-		default:
-			break;
-		}
-		case 1: switch(op) {
-		case LESS:case LESS_EQ:return false;
-		case GREAT:case GREAT_EQ: return true;
-		default:
-			break;
-		}
-		default: throw error("Comparison error: "+left+" : "+right);
+	private Boolean order(Object left, Object right,Tokens op) {
+		try {
+			switch(getType(left)) {
+			case LETTER: return interpretOrder(((Character)left).compareTo((Character)right),op);
+			case SCRIPT: return interpretOrder(((String)left).compareTo((String)right),op);
+			case NUMBER: return interpretOrder(((Double)left).compareTo((Double)right),op);
+			case ANSWER: return interpretOrder(((Boolean)left).compareTo((Boolean)right),op);
+			default:
+				throw new RuntimeException("Vexed: Can't order tha'");
+			}
+		}catch(ClassCastException e) {
+			throw new RuntimeException("Vexed: messin' wi types");
 		}
 	}
 	
+	
+	private Boolean interpretOrder(int compareTo, Tokens op) {
+		int value = compareTo;
+		boolean output;
+		switch(op) {
+		case LESS_EQ: case GREAT: value = value*-1;
+		default:
+			break;
+		}
+		switch(value) {
+		case 1: output = false; break;
+		case 0: output = false; break;
+		case -1: output = true; break;
+		default:
+			throw new RuntimeException("Flummoxed: comparison error.");
+		}
+		switch(op) {
+		case LESS_EQ: case GREAT_EQ: return !output;
+		default:
+			return output;
+		}
+		
+	}
 	private boolean isEqual(Object left, Object right) {
 		if (left == null && right == null) return true;
 	    if (left == null) return false;
-
 	    return left.equals(right);
 	}
 
@@ -182,7 +207,7 @@ public class Interpreter implements NodeVisitor {
 		switch(expr.op) {
 		case MINUS:
 			checkNumOperand(Tokens.MINUS,right);
-			return -(Integer)right;
+			return -(Double)right;
 		case EXCLAMATION:
 			return !isBool(right);
 		default:
@@ -195,9 +220,6 @@ public class Interpreter implements NodeVisitor {
 	public Object visitExprStmt(Expression exprstmt) {
 		if(exprstmt.expr instanceof Expr.Var) {
 			Object value = currentBodger.rt.get(((Expr.Var)(exprstmt.expr)).name);
-			if(value==null) {
-				value = "nowt";
-			}
 			return value;
 		}
 				
@@ -210,12 +232,15 @@ public class Interpreter implements NodeVisitor {
 	public Object visitPrintStmt(Print stmt) {
 		Object value = stmt.expr.accept(this);
 		if(stmt.type == 0) {
-			System.out.println(toString(value));
+			System.out.print(toString(value)+"\n");
 		}
 		if(stmt.type == 1) {
-			System.out.print(toString(value));
+			System.out.print(toString(value)+"\n");
 		}
-	    return toString(value);
+		if(value instanceof String) {
+			return new BString((String)value);
+		}
+	    return new BString(toString(value));
 		
 	}
 
@@ -234,10 +259,10 @@ public class Interpreter implements NodeVisitor {
 			currentBodger.rt.define(defVar.name, new EnvVar(value,type));	
 			
 			
-			return currentBodger.name +"." +defVar.name;
+			return new BString(currentBodger.name +"." +defVar.name);
 		}
 		else {
-			throw error("Variable definition inncorrect.");
+			throw new RuntimeException("Flummoxed: Variable definition inncorrect.");
 		}
 	}
 
@@ -268,19 +293,20 @@ public class Interpreter implements NodeVisitor {
 	public Object visitForgetVar(ForgetVar forgetVar) {
 		String name = forgetVar.name;
 		currentBodger.rt.remove(name);
-		return name;
+		return new BString(name);
 	}
 	
 	
 	@Override
 	public Object visitIf(Stmt.If if1) {
+		Object value = null;
 		if (isBool(if1.condition.accept(this))) {
-			if1.thenStmt.accept(this);
+			value = if1.thenStmt.accept(this);
 		}
 		else if(if1.elseStmt != null) {
-			if1.elseStmt.accept(this);
+			value = if1.elseStmt.accept(this);
 		}
-		return "nowt";
+		return value;
 	}
 	@Override
 	public Object visitLogicExpr(Logical logical) {
@@ -294,7 +320,7 @@ public class Interpreter implements NodeVisitor {
 				return left;
 			}
 		}
-		return logical.right.accept(this);
+		return isBool(logical.right.accept(this));
 	}
 	@Override
 	public Object visitWhen(When when) {
@@ -306,14 +332,14 @@ public class Interpreter implements NodeVisitor {
 		}if (when.elseStmt != null) {
 			when.elseStmt.accept(this);
 		}
-		return "nowt";
+		return  new BString("nowt");
 	}
 	@Override
 	public Object visitWhile(While while1) {
 		Object condition = while1.condition.accept(this);
 		switch(while1.form) {
 			case 0: 
-				while(isBool(condition)) {
+				while(!isBool(condition)) {
 					for(int i=0;i<while1.body.size();i++) {
 						while1.body.get(i).accept(this);
 					}
@@ -326,10 +352,10 @@ public class Interpreter implements NodeVisitor {
 						while1.body.get(i).accept(this);
 					}
 					condition = while1.condition.accept(this);
-				}while(isBool(condition));
+				}while(!isBool(condition));
 				break;
 		}
-		return "nowt";
+		return new BString("nowt");
 	}
 	@Override
 	public Object visitCallExpr(Call call) {
@@ -340,12 +366,12 @@ public class Interpreter implements NodeVisitor {
 		}
 		
 		if(!(called instanceof EyupFunction)) {
-			throw new RuntimeException("Can only call functions");
+			throw new RuntimeException("Flummoxed: Can only call functions");
 		}
 		EyupFunction callable = (EyupFunction)called;
 		
 		if(args.size() != callable.arity()) {
-			throw new RuntimeException("Expected " +
+			throw new RuntimeException("Flummoxed: Expected " +
 					callable.arity() + " arguments but got " +
 			          args.size());
 		}
@@ -359,7 +385,7 @@ public class Interpreter implements NodeVisitor {
 		Object called = instance.called.accept(this);
 		List<Object> args = new ArrayList<>();
 		if(!(called instanceof EyupBodger)) {
-			throw new RuntimeException("Error not a Bodger!");
+			throw new RuntimeException("Vexed: Error not a Bodger!");
 		}
 		EyupBodger callable = (EyupBodger)called;
 		Object bodger = callable.call(this,args);
@@ -383,7 +409,7 @@ public class Interpreter implements NodeVisitor {
 	public Object visitFunction(Function function) {
 		EyupFunction fun = new EyupFunction(function,currentBodger);
 		currentBodger.rt.define(function.name, new EnvVar(fun, fun.type()));
-		return currentBodger.name +"." +function.name;
+		return new BString(currentBodger.name +"." +function.name);
 	}
 	@Override
 	public Object visitBlock(Block block) {
@@ -416,22 +442,23 @@ public class Interpreter implements NodeVisitor {
 	}
 	
 	private void checkNumOperand(Tokens op, Object operand) {
-		if (operand instanceof Integer) return;
-		throw error( "Operand must be a number. Error on: "+ op);
+		if (operand instanceof Double) return;
+		throw new RuntimeException("Flummoxed: bad'un Number : "+op);
 	}
 	private void checkStringOperands(Tokens op, Object left, Object right) {
 		if (left instanceof String && right instanceof String) return;
-		throw error("Operands must be Script. Error on: "+ op);
+		throw new RuntimeException("Flummoxed: bad'un Script : "+op);
 	}
 	private void checkNumOperands(Tokens op, Object left, Object right) {
-	if (left instanceof Integer && right instanceof Integer) return;
-	throw error("Operands must be numbers. Error on: "+ op);
+	if (left instanceof Double && right instanceof Double) return;
+	throw new RuntimeException("Flummoxed: bad'un Number : "+op);
 	}
 	private boolean isBool(Object object) {
-	    if (object == null) return false;
+	    if (object == null) throw new RuntimeException("Flummoxed: bad'un Answer");
 	    if (object instanceof Boolean) return (boolean)object;
-	    return true;
+	    throw new RuntimeException("Flummoxed: bad'un Answer");
 	 }
+	
 	private RuntimeException error(String error) {
 	    core.Error.runtimeError(error);
 		return new RuntimeException();
@@ -443,11 +470,14 @@ public class Interpreter implements NodeVisitor {
 		if (value instanceof Float) {
 			return Type.Float;
 		}
+		if (value instanceof Double) {
+			return Type.Double;
+		}
 		if (value instanceof String) {
-			if (((String) value).length() == 1) {
-				return Type.Char;
-			}
 			return Type.String;
+		}
+		if (value instanceof Character) {
+			return Type.Char;
 		}
 		if (value instanceof Boolean ) {
 			return Type.Bool;
@@ -455,7 +485,7 @@ public class Interpreter implements NodeVisitor {
 		if (value instanceof EyupInstance ) {
 			return Type.Instance;
 		}
-		throw error("Unknown Type");
+		return null;
 	}
 	//Method to validate input to binary operators
 	@SuppressWarnings("unused")
@@ -466,13 +496,14 @@ public class Interpreter implements NodeVisitor {
 	private Tokens getType(Object value) {
 
 		switch(checkType(value)) {
-		case Int: case Float: return Tokens.NUMBER;
+		case Int: case Float: case Double: return Tokens.NUMBER;
 		case Char: return Tokens.LETTER;
 		case String: return Tokens.SCRIPT;
 		case Bool: return Tokens.ANSWER;
 		case Instance: return Tokens.INSTANCE;
+		default: throw new RuntimeException("Flummoxed: unknown type");
 		}
-		throw error("Unknown Type");
+		
 	}
 	public void resolve(Expr expr, int depth) {
 		currentBodger.locals.put(expr,depth);
@@ -485,36 +516,6 @@ public class Interpreter implements NodeVisitor {
 	
 	
 	public static void main(String[] args) {
-		Parser p = new Parser();
-		Lexer l = new Lexer();
-		Interpreter i = new Interpreter();
-		TypeChecker t = new TypeChecker();
-		lexer.OutputTuple lexed;
-		Resolver resolver = new Resolver(i);
-		lexed = l.lexString("summat x :=7");
-		lexed.tokens.add(Tokens.EOI);
-		ArrayList<Stmt> stmts = p.parseInput(lexed);
-		t.check(stmts);
-		resolver.resolve(stmts);
-		i.interpret(stmts);
-		lexed = l.lexString("fettle give : Number giz fettle five : Script giz five := \"five\" oer give:= five() oer");
-		lexed.tokens.add(Tokens.EOI);
-		stmts = p.parseInput(lexed);
-		resolver.resolve(stmts);
-		t.check(stmts);
-		i.interpret(stmts);
-		lexed = l.lexString("give()");
-		lexed.tokens.add(Tokens.EOI);
-		stmts = p.parseInput(lexed);
-		resolver.resolve(stmts);
-		t.check(stmts);
-		i.interpret(stmts);
-		
-		
-		
-		
-		
-		
 		
 		
 	}
@@ -524,7 +525,7 @@ public class Interpreter implements NodeVisitor {
 		EyupBodger bodg = new EyupBodger(bodger.name);
 		currentBodger.rt.assign(bodger.name, new EnvVar(bodg, Tokens.BODGER));
 		
-		return currentBodger.name +": " +bodger.name;
+		return new BString(currentBodger.name +": " +bodger.name);
 	}
 	@Override
 	//Might need to adapt for static versions
@@ -533,7 +534,7 @@ public class Interpreter implements NodeVisitor {
 		if(object instanceof EyupInstance) {
 			return ((EyupInstance) object).get(get.name,get); 
 		}
-		throw error(get.name+ " only instances have properties");
+		throw new RuntimeException("Flummoxed: "+ get.name+ " only instances have properties");
 		
 	}
 	@Override
@@ -543,24 +544,23 @@ public class Interpreter implements NodeVisitor {
 			EyupBodger bodge = (EyupBodger)newBodger;
 			bodge.parent = currentBodger;
 			this.currentBodger = bodge;
-			return bodge.name+": "+"eyup";
+			return new BString(bodge.name+": "+"eyup");
 		}
 		
-		throw error("not a bodger");
+		throw new RuntimeException("Flummoxed: "+"not a bodger");
 		
 	}
 	@Override
 	public Object visitSithe(SitheCall sitheCall) {
 		EyupBodger curBodge = currentBodger.parent;
 		if(curBodge == null) {
-			System.out.print("END PROG");
+			throw new core.Leave("Goodbye");
 		}
 		else {
 			String name = currentBodger.name;
 			this.currentBodger = curBodge;
-			return name+": sithee";
+			return new BString(name+": sithee");
 		}
-		return null;
 	}
 	@Override
 	public Object visitMissenExpr(Missen missen) {
@@ -639,6 +639,11 @@ public class Interpreter implements NodeVisitor {
 		}
 		return null;
 	}**/
+	@Override
+	public Object visitCharAccess(CharAccess charAccess) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 
 }

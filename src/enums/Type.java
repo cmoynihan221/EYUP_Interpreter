@@ -7,5 +7,5 @@ public enum Type {
 	Char,
 	Bool,
 	Instance,
-	Bodger
+	Bodger, Double
 }
